@@ -136,14 +136,27 @@
         <button class="btn" onclick="document.getElementById('gameOver').classList.add('hidden'); startGame()">再来一局</button>
     </div>
 
+    <div class="pause-overlay hidden" id="pauseOverlay">
+        <h2>⏸️ 游戏暂停</h2>
+        <p>按 ESC 继续游戏</p>
+    </div>
+
+    <div class="start-screen" id="startScreen">
+        <h1>👆 疯狂点击</h1>
+        <p>按 空格键 或 Enter 开始游戏</p>
+        <p style="font-size: 0.9rem; color: #666;">快速点击目标获得高分！</p>
+    </div>
+
     <script>
         let score = 0;
         let time = 30;
         let gameRunning = false;
         let timerInterval;
+        let paused = false;
+        let gameStarted = false;
 
         function handleClick() {
-            if (!gameRunning) return;
+            if (!gameRunning || paused) return;
             
             score++;
             document.getElementById('score').textContent = score;
@@ -163,21 +176,38 @@
             score = 0;
             time = 30;
             gameRunning = true;
+            paused = false;
+            gameStarted = true;
             
             document.getElementById('score').textContent = score;
             document.getElementById('time').textContent = time;
             document.getElementById('startBtn').disabled = true;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('pauseOverlay').classList.add('hidden');
             
             document.getElementById('target').style.transform = 'translate(0, 0)';
             
             timerInterval = setInterval(() => {
-                time--;
-                document.getElementById('time').textContent = time;
-                
-                if (time <= 0) {
-                    endGame();
+                if (!paused) {
+                    time--;
+                    document.getElementById('time').textContent = time;
+                    
+                    if (time <= 0) {
+                        endGame();
+                    }
                 }
             }, 1000);
+        }
+
+        function togglePause() {
+            if (!gameStarted) return;
+            paused = !paused;
+            const overlay = document.getElementById('pauseOverlay');
+            if (paused) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
         }
 
         function endGame() {
@@ -187,6 +217,21 @@
             document.getElementById('finalScore').textContent = score;
             document.getElementById('gameOver').classList.remove('hidden');
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                togglePause();
+                return;
+            }
+            
+            if (!gameStarted) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    startGame();
+                }
+                return;
+            }
+        });
     </script>
 </body>
 </html>

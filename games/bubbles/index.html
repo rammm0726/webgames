@@ -72,11 +72,50 @@
             color: #888;
             font-size: 0.85rem;
         }
-    </style>
+        .pause-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .pause-overlay h2 { color: #a855f7; font-size: 2rem; }
+        .hidden { display: none; }
+        .start-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 26, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .start-screen h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #f472b6, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .start-screen p { color: #888; font-size: 1.2rem; }
+
 </head>
 <body>
     <div class="game-container">
         <div class="title">泡泡消除 🫧</div>
+        <div class="pause-overlay hidden" id="pauseOverlay">
+            <h2>⏸️ 游戏暂停</h2>
+            <p>按 ESC 继续游戏</p>
+        </div>
+
+        <div class="start-screen" id="startScreen">
+            <h1>🫧 泡泡消除</h1>
+            <p>按 空格键 或 Enter 开始游戏</p>
+            <p style="font-size: 0.9rem; color: #666;">点击泡泡消除它们，连续消除更多获得更高分数！</p>
+        </div>
         <div class="score-box">
             <div class="score-label">分数</div>
             <div class="score" id="score">0</div>

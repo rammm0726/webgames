@@ -1,7 +1,7 @@
 :root {
-  --bg-primary: #0f0f1a;
-  --bg-secondary: #1a1a2e;
-  --bg-card: #16162a;
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #252542;
+  --bg-card: #21213a;
   --text-primary: #e0e0e0;
   --text-secondary: #8888a0;
   --neon-purple: #a855f7;
@@ -178,10 +178,9 @@ body {
   overflow: hidden;
 }
 
-.game-card .game-thumbnail::before {
-  content: '🎮';
+.game-card .game-thumbnail .game-icon {
   font-size: 3rem;
-  opacity: 0.5;
+  opacity: 0.8;
 }
 
 .game-card .game-thumbnail .play-overlay {

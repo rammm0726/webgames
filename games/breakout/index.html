@@ -74,7 +74,7 @@
             color: #888;
             font-size: 0.85rem;
         }
-        .game-over {
+        .game-over, .pause-overlay {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.8);
@@ -84,8 +84,27 @@
             flex-direction: column;
             gap: 1rem;
         }
-        .game-over h2 { color: #22c55e; font-size: 2rem; }
+        .game-over h2, .pause-overlay h2 { font-size: 2rem; }
+        .game-over h2 { color: #22c55e; }
+        .pause-overlay h2 { color: #a855f7; }
         .hidden { display: none; }
+        .start-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 26, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .start-screen h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #22c55e, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .start-screen p { color: #888; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -114,6 +133,17 @@
         <button class="btn" onclick="document.getElementById('gameOver').classList.add('hidden'); startGame()">再来一局</button>
     </div>
 
+    <div class="pause-overlay hidden" id="pauseOverlay">
+        <h2>⏸️ 游戏暂停</h2>
+        <p>按 ESC 继续游戏</p>
+    </div>
+
+    <div class="start-screen" id="startScreen">
+        <h1>🧱 打砖块</h1>
+        <p>按 空格键 或 Enter 开始游戏</p>
+        <p style="font-size: 0.9rem; color: #666;">使用 ← → 方向键控制挡板</p>
+    </div>
+
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -127,6 +157,8 @@
         let gameLoop;
         let keys = {};
         let ballLaunched = false;
+        let paused = false;
+        let gameStarted = false;
 
         const colors = ['#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6'];
 
@@ -171,7 +203,7 @@
         }
 
         function update() {
-            if (!gameRunning) return;
+            if (!gameRunning || paused) return;
             
             if (keys['ArrowLeft'] && paddle.x > 0) paddle.x -= 6;
             if (keys['ArrowRight'] && paddle.x < canvas.width - paddle.width) paddle.x += 6;
@@ -257,10 +289,14 @@
             score = 0;
             lives = 3;
             ballLaunched = false;
+            paused = false;
+            gameStarted = true;
             
             document.getElementById('score').textContent = score;
             document.getElementById('lives').textContent = lives;
             document.getElementById('startBtn').disabled = true;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('pauseOverlay').classList.add('hidden');
             
             paddle = { x: 150, y: 370, width: 100, height: 15 };
             ball = { x: 200, y: 355, radius: 8, dx: 3, dy: -3 };
@@ -268,6 +304,17 @@
             
             gameRunning = true;
             gameLoopFn();
+        }
+
+        function togglePause() {
+            if (!gameStarted) return;
+            paused = !paused;
+            const overlay = document.getElementById('pauseOverlay');
+            if (paused) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
         }
 
         function endGame() {
@@ -279,6 +326,21 @@
         }
 
         document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                togglePause();
+                return;
+            }
+            
+            if (!gameStarted) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    startGame();
+                }
+                return;
+            }
+            
+            if (paused) return;
+            
             keys[e.key] = true;
             if (e.key === ' ' && !ballLaunched && gameRunning) {
                 ballLaunched = true;

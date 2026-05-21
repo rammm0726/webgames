@@ -122,7 +122,7 @@
             color: #888;
             font-size: 0.85rem;
         }
-        .game-over {
+        .game-over, .pause-overlay {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.8);
@@ -132,8 +132,27 @@
             flex-direction: column;
             gap: 1rem;
         }
-        .game-over h2 { color: #22c55e; font-size: 2rem; }
+        .game-over h2, .pause-overlay h2 { font-size: 2rem; }
+        .game-over h2 { color: #22c55e; }
+        .pause-overlay h2 { color: #a855f7; }
         .hidden { display: none; }
+        .start-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 26, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .start-screen h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #22c55e, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .start-screen p { color: #888; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -174,6 +193,17 @@
         <button class="btn" onclick="document.getElementById('gameOver').classList.add('hidden'); startGame()">再来一局</button>
     </div>
 
+    <div class="pause-overlay hidden" id="pauseOverlay">
+        <h2>⏸️ 游戏暂停</h2>
+        <p>按 ESC 继续游戏</p>
+    </div>
+
+    <div class="start-screen" id="startScreen">
+        <h1>🐹 打地鼠</h1>
+        <p>按 空格键 或 Enter 开始游戏</p>
+        <p style="font-size: 0.9rem; color: #666;">点击冒出的地鼠获得分数！</p>
+    </div>
+
     <script>
         let score = 0;
         let time = 30;
@@ -182,6 +212,8 @@
         let timerInterval;
         let moleInterval;
         let activeMole = -1;
+        let paused = false;
+        let gameStarted = false;
 
         function updateStats() {
             document.getElementById('score').textContent = score;
@@ -220,7 +252,7 @@
         }
 
         function whack(holeIndex) {
-            if (!gameRunning) return;
+            if (!gameRunning || paused) return;
             
             if (activeMole === holeIndex) {
                 hideMole();
@@ -235,21 +267,39 @@
             lives = 3;
             gameRunning = true;
             activeMole = -1;
+            paused = false;
+            gameStarted = true;
             
             updateStats();
             document.getElementById('startBtn').disabled = true;
             document.getElementById('gameOver').classList.add('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('pauseOverlay').classList.add('hidden');
             
             timerInterval = setInterval(() => {
-                time--;
-                updateStats();
-                if (time <= 0) {
-                    endGame();
+                if (!paused) {
+                    time--;
+                    updateStats();
+                    if (time <= 0) {
+                        endGame();
+                    }
                 }
             }, 1000);
             
             moleInterval = setInterval(showMole, 600);
             showMole();
+        }
+
+        function togglePause() {
+            if (!gameStarted) return;
+            paused = !paused;
+            const overlay = document.getElementById('pauseOverlay');
+            if (paused) {
+                hideMole();
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
         }
 
         function endGame() {
@@ -264,6 +314,21 @@
         }
 
         updateStats();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                togglePause();
+                return;
+            }
+            
+            if (!gameStarted) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    startGame();
+                }
+                return;
+            }
+        });
     </script>
 </body>
 </html>
