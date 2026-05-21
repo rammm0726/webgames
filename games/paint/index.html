@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>涂色画板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0f0f1a; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ec4899, #f43f5e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .colors {
+            display: flex;
+            gap: 5px;
+        }
+        .color-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: white; transform: scale(1.1); }
+        .brush-sizes {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .size-btn {
+            width: 40px;
+            height: 40px;
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .size-btn:hover { background: #2a2a4e; }
+        .size-btn.active { background: rgba(236, 72, 153, 0.3); border-color: #ec4899; }
+        .size-dot {
+            background: #e0e0e0;
+            border-radius: 50%;
+        }
+        .btn {
+            background: linear-gradient(135deg, #ec4899, #f43f5e);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .canvas-container {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 10px;
+        }
+        #canvas {
+            display: block;
+            background: white;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+        .instructions {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">涂色画板 🎨</div>
+        <div class="controls">
+            <div class="colors">
+                <button class="color-btn active" style="background: #000000" onclick="setColor('#000000')"></button>
+                <button class="color-btn" style="background: #ffffff" onclick="setColor('#ffffff')"></button>
+                <button class="color-btn" style="background: #ef4444" onclick="setColor('#ef4444')"></button>
+                <button class="color-btn" style="background: #f97316" onclick="setColor('#f97316')"></button>
+                <button class="color-btn" style="background: #eab308" onclick="setColor('#eab308')"></button>
+                <button class="color-btn" style="background: #22c55e" onclick="setColor('#22c55e')"></button>
+                <button class="color-btn" style="background: #06b6d4" onclick="setColor('#06b6d4')"></button>
+                <button class="color-btn" style="background: #3b82f6" onclick="setColor('#3b82f6')"></button>
+                <button class="color-btn" style="background: #8b5cf6" onclick="setColor('#8b5cf6')"></button>
+                <button class="color-btn" style="background: #ec4899" onclick="setColor('#ec4899')"></button>
+            </div>
+            <div class="brush-sizes">
+                <button class="size-btn active" onclick="setSize(2)">
+                    <div class="size-dot" style="width: 4px; height: 4px;"></div>
+                </button>
+                <button class="size-btn" onclick="setSize(5)">
+                    <div class="size-dot" style="width: 8px; height: 8px;"></div>
+                </button>
+                <button class="size-btn" onclick="setSize(10)">
+                    <div class="size-dot" style="width: 12px; height: 12px;"></div>
+                </button>
+                <button class="size-btn" onclick="setSize(20)">
+                    <div class="size-dot" style="width: 16px; height: 16px;"></div>
+                </button>
+            </div>
+            <button class="btn" onclick="clearCanvas()">清空画布</button>
+            <button class="btn" onclick="saveCanvas()">保存图片</button>
+        </div>
+        <div class="canvas-container">
+            <canvas id="canvas" width="500" height="400"></canvas>
+        </div>
+        <div class="instructions">选择颜色和笔刷大小，在画布上自由绘画！</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let currentColor = '#000000';
+        let currentSize = 2;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function setColor(color) {
+            currentColor = color;
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function setSize(size) {
+            currentSize = size;
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveCanvas() {
+            const link = document.createElement('a');
+            link.download = `painting_${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+
+        canvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            draw({ offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top });
+        });
+
+        canvas.addEventListener('touchend', () => isDrawing = false);
+
+        clearCanvas();
+    </script>
+</body>
+</html>

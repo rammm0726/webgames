@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0f0f1a; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #06b6d4, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            background: #1a1a2e;
+            padding: 5px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #16162a;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .cell:hover { background: #2a2a4e; }
+        .cell.selected { background: rgba(6, 182, 212, 0.3); }
+        .cell.fixed { color: #06b6d4; }
+        .cell.error { color: #ef4444; }
+        .cell.highlight { background: rgba(6, 182, 212, 0.15); }
+        .border-right { border-right: 2px solid #06b6d4; }
+        .border-bottom { border-bottom: 2px solid #06b6d4; }
+        .numbers {
+            display: flex;
+            gap: 5px;
+        }
+        .num-btn {
+            width: 45px;
+            height: 45px;
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .num-btn:hover { 
+            background: rgba(6, 182, 212, 0.3); 
+            border-color: #06b6d4;
+        }
+        .btn {
+            background: linear-gradient(135deg, #06b6d4, #22d3ee);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .instructions {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+        }
+        .game-over {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .game-over h2 { color: #06b6d4; font-size: 2rem; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">数独 🧩</div>
+        <div class="board" id="board"></div>
+        <div class="controls">
+            <div class="numbers">
+                <button class="num-btn" onclick="inputNumber(1)">1</button>
+                <button class="num-btn" onclick="inputNumber(2)">2</button>
+                <button class="num-btn" onclick="inputNumber(3)">3</button>
+                <button class="num-btn" onclick="inputNumber(4)">4</button>
+                <button class="num-btn" onclick="inputNumber(5)">5</button>
+                <button class="num-btn" onclick="inputNumber(6)">6</button>
+                <button class="num-btn" onclick="inputNumber(7)">7</button>
+                <button class="num-btn" onclick="inputNumber(8)">8</button>
+                <button class="num-btn" onclick="inputNumber(9)">9</button>
+            </div>
+            <button class="btn" onclick="clearCell()">清除</button>
+            <button class="btn" onclick="newGame()">新游戏</button>
+        </div>
+        <div class="instructions">点击格子选择，然后点击数字填入！</div>
+    </div>
+
+    <div class="game-over hidden" id="gameOver">
+        <h2>恭喜完成！🎉</h2>
+        <button class="btn" onclick="document.getElementById('gameOver').classList.add('hidden'); newGame()">再来一局</button>
+    </div>
+
+    <script>
+        let board = [];
+        let solution = [];
+        let selectedCell = null;
+
+        const puzzles = [
+            [
+                [5,3,0,0,7,0,0,0,0],
+                [6,0,0,1,9,5,0,0,0],
+                [0,9,8,0,0,0,0,6,0],
+                [8,0,0,0,6,0,0,0,3],
+                [4,0,0,8,0,3,0,0,1],
+                [7,0,0,0,2,0,0,0,6],
+                [0,6,0,0,0,0,2,8,0],
+                [0,0,0,4,1,9,0,0,5],
+                [0,0,0,0,8,0,0,7,9]
+            ],
+            [
+                [0,0,0,2,6,0,7,0,1],
+                [6,8,0,0,7,0,0,9,0],
+                [1,9,0,0,0,4,5,0,0],
+                [8,2,0,1,0,0,0,4,0],
+                [0,0,4,6,0,2,9,0,0],
+                [0,5,0,0,0,3,0,2,8],
+                [0,0,9,3,0,0,0,7,4],
+                [0,4,0,0,5,0,0,3,6],
+                [7,0,3,0,1,8,0,0,0]
+            ]
+        ];
+
+        function initBoard(puzzle) {
+            board = puzzle.map(row => [...row]);
+            solution = solveSudoku(puzzle.map(row => [...row]));
+            render();
+        }
+
+        function solveSudoku(grid) {
+            const solve = () => {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (grid[row][col] === 0) {
+                            for (let num = 1; num <= 9; num++) {
+                                if (isValid(grid, row, col, num)) {
+                                    grid[row][col] = num;
+                                    if (solve()) return true;
+                                    grid[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            };
+            solve();
+            return grid;
+        }
+
+        function isValid(grid, row, col, num) {
+            for (let i = 0; i < 9; i++) {
+                if (grid[row][i] === num) return false;
+                if (grid[i][col] === num) return false;
+            }
+            
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (grid[boxRow + i][boxCol + j] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function render() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    if (col % 3 === 2 && col !== 8) cell.classList.add('border-right');
+                    if (row % 3 === 2 && row !== 8) cell.classList.add('border-bottom');
+                    
+                    if (board[row][col] !== 0) {
+                        cell.textContent = board[row][col];
+                        if (solution[row][col] !== board[row][col]) {
+                            cell.classList.add('error');
+                        }
+                    }
+                    
+                    cell.addEventListener('click', () => selectCell(row, col));
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        function selectCell(row, col) {
+            document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected', 'highlight'));
+            
+            selectedCell = { row, col };
+            const cells = document.querySelectorAll('.cell');
+            const idx = row * 9 + col;
+            cells[idx].classList.add('selected');
+            
+            for (let i = 0; i < 9; i++) {
+                cells[row * 9 + i].classList.add('highlight');
+                cells[i * 9 + col].classList.add('highlight');
+            }
+            
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    cells[(boxRow + i) * 9 + boxCol + j].classList.add('highlight');
+                }
+            }
+        }
+
+        function inputNumber(num) {
+            if (!selectedCell) return;
+            
+            const { row, col } = selectedCell;
+            if (solution[row][col] === 0) return;
+            
+            board[row][col] = num;
+            render();
+            selectCell(row, col);
+            checkWin();
+        }
+
+        function clearCell() {
+            if (!selectedCell) return;
+            
+            const { row, col } = selectedCell;
+            if (solution[row][col] !== 0) {
+                board[row][col] = 0;
+                render();
+                selectCell(row, col);
+            }
+        }
+
+        function checkWin() {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (board[row][col] !== solution[row][col]) return;
+                }
+            }
+            document.getElementById('gameOver').classList.remove('hidden');
+        }
+
+        function newGame() {
+            const puzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+            initBoard(puzzle);
+            selectedCell = null;
+        }
+
+        newGame();
+    </script>
+</body>
+</html>

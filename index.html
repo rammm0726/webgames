@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解压小游戏乐园</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🎮 解压乐园</div>
+            <div class="search-box">
+                <input type="text" placeholder="搜索游戏...">
+            </div>
+            <nav class="nav">
+                <a href="#" class="active">首页</a>
+                <a href="#puzzle">益智</a>
+                <a href="#relax">放松</a>
+                <a href="#reaction">反应</a>
+                <a href="#classic">经典</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <section class="featured-section">
+            <h2 class="section-title">热门推荐</h2>
+            <div class="featured-games">
+                <div class="featured-card" onclick="openGame('2048')">
+                    <div class="featured-thumbnail">
+                        <div class="play-overlay">
+                            <div class="play-btn">▶</div>
+                        </div>
+                    </div>
+                    <div class="featured-info">
+                        <h3 class="featured-title">2048</h3>
+                        <p class="featured-desc">经典数字合成游戏，挑战你的策略思维</p>
+                        <div class="featured-stats">
+                            <span>🎯 热门</span>
+                            <span>⭐ 4.9</span>
+                            <span>👥 10万+ 玩家</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="featured-card" onclick="openGame('bubbles')">
+                    <div class="featured-thumbnail" style="background: linear-gradient(135deg, #f472b6, #fb923c);">
+                        <div class="play-overlay">
+                            <div class="play-btn">▶</div>
+                        </div>
+                    </div>
+                    <div class="featured-info">
+                        <h3 class="featured-title">泡泡消除</h3>
+                        <p class="featured-desc">戳破泡泡，释放压力，放松心情</p>
+                        <div class="featured-stats">
+                            <span>🎯 治愈</span>
+                            <span>⭐ 4.8</span>
+                            <span>👥 8万+ 玩家</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="featured-card" onclick="openGame('whackamole')">
+                    <div class="featured-thumbnail" style="background: linear-gradient(135deg, #22c55e, #14b8a6);">
+                        <div class="play-overlay">
+                            <div class="play-btn">▶</div>
+                        </div>
+                    </div>
+                    <div class="featured-info">
+                        <h3 class="featured-title">打地鼠</h3>
+                        <p class="featured-desc">快速反应挑战，锤击所有地鼠</p>
+                        <div class="featured-stats">
+                            <span>🎯 刺激</span>
+                            <span>⭐ 4.7</span>
+                            <span>👥 12万+ 玩家</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="category-tabs">
+            <button class="category-tab active" onclick="showCategory('all')">全部</button>
+            <button class="category-tab" onclick="showCategory('puzzle')">益智游戏</button>
+            <button class="category-tab" onclick="showCategory('relax')">放松游戏</button>
+            <button class="category-tab" onclick="showCategory('reaction')">反应游戏</button>
+            <button class="category-tab" onclick="showCategory('classic')">经典游戏</button>
+        </div>
+
+        <section class="category-section" id="all">
+            <h2 class="section-title">全部游戏</h2>
+            <div class="games-grid">
+                <div class="game-card" data-category="puzzle" onclick="openGame('2048')">
+                    <div class="game-thumbnail"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">2048</h3>
+                        <span class="game-category">益智</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="relax" onclick="openGame('bubbles')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #f472b6, #fb923c);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">泡泡消除</h3>
+                        <span class="game-category">放松</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="reaction" onclick="openGame('whackamole')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #22c55e, #14b8a6);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">打地鼠</h3>
+                        <span class="game-category">反应</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="puzzle" onclick="openGame('puzzle')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">拼图游戏</h3>
+                        <span class="game-category">益智</span>
+                        <div class="game-rating">⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="relax" onclick="openGame('paint')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #ec4899, #f43f5e);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">涂色画板</h3>
+                        <span class="game-category">放松</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="reaction" onclick="openGame('dodger')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #f59e0b, #ef4444);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">躲避障碍</h3>
+                        <span class="game-category">反应</span>
+                        <div class="game-rating">⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="classic" onclick="openGame('snake')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #10b981, #06b6d4);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">贪吃蛇</h3>
+                        <span class="game-category">经典</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="classic" onclick="openGame('tetris')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">俄罗斯方块</h3>
+                        <span class="game-category">经典</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="relax" onclick="openGame('squeeze')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #a855f7, #ec4899);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">挤压玩具</h3>
+                        <span class="game-category">放松</span>
+                        <div class="game-rating">⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="puzzle" onclick="openGame('sudoku')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">数独</h3>
+                        <span class="game-category">益智</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="reaction" onclick="openGame('clicker')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #f43f5e, #f59e0b);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">疯狂点击</h3>
+                        <span class="game-category">反应</span>
+                        <div class="game-rating">⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+
+                <div class="game-card" data-category="classic" onclick="openGame('breakout')">
+                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #22c55e, #10b981);"></div>
+                    <div class="game-info">
+                        <h3 class="game-title">打砖块</h3>
+                        <span class="game-category">经典</span>
+                        <div class="game-rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>🎮 解压小游戏乐园 - 让快乐触手可及</p>
+    </footer>
+
+    <div class="game-modal" id="gameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">游戏标题</h3>
+                <button class="close-btn" onclick="closeGame()">×</button>
+            </div>
+            <div class="game-container">
+                <iframe class="game-frame" id="gameFrame" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
