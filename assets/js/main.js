@@ -7,9 +7,7 @@ const gameTitles = {
     'dodger': '躲避障碍',
     'snake': '贪吃蛇',
     'tetris': '俄罗斯方块',
-    'squeeze': '挤压玩具',
     'sudoku': '数独',
-    'clicker': '疯狂点击',
     'breakout': '打砖块'
 };
 
@@ -35,13 +33,20 @@ function closeGame() {
 
 function showCategory(category) {
     const tabs = document.querySelectorAll('.category-tab');
+    const navLinks = document.querySelectorAll('.nav a');
     const games = document.querySelectorAll('.game-card');
     
     tabs.forEach(tab => tab.classList.remove('active'));
+    navLinks.forEach(link => link.classList.remove('active'));
     
     const activeTab = document.querySelector(`.category-tab[onclick="showCategory('${category}')"]`);
     if (activeTab) {
         activeTab.classList.add('active');
+    }
+    
+    const activeNavLink = document.querySelector(`.nav a[onclick="showCategory('${category}')"]`);
+    if (activeNavLink) {
+        activeNavLink.classList.add('active');
     }
     
     games.forEach(game => {

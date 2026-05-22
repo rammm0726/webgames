@@ -14,11 +14,11 @@
                 <input type="text" placeholder="搜索游戏...">
             </div>
             <nav class="nav">
-                <a href="#" class="active">首页</a>
-                <a href="#puzzle">益智</a>
-                <a href="#relax">放松</a>
-                <a href="#reaction">反应</a>
-                <a href="#classic">经典</a>
+                <a href="#" class="active" onclick="showCategory('all')">首页</a>
+                <a href="#puzzle" onclick="showCategory('puzzle')">益智</a>
+                <a href="#relax" onclick="showCategory('relax')">放松</a>
+                <a href="#reaction" onclick="showCategory('reaction')">反应</a>
+                <a href="#classic" onclick="showCategory('classic')">经典</a>
             </nav>
         </div>
     </header>
@@ -163,30 +163,12 @@
                     </div>
                 </div>
 
-                <div class="game-card" data-category="relax" onclick="openGame('squeeze')">
-                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #a855f7, #ec4899);"><span class="game-icon">🫰</span></div>
-                    <div class="game-info">
-                        <h3 class="game-title">挤压玩具</h3>
-                        <span class="game-category">放松</span>
-                        <div class="game-rating">⭐⭐⭐⭐</div>
-                    </div>
-                </div>
-
                 <div class="game-card" data-category="puzzle" onclick="openGame('sudoku')">
                     <div class="game-thumbnail" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);"><span class="game-icon">🔢</span></div>
                     <div class="game-info">
                         <h3 class="game-title">数独</h3>
                         <span class="game-category">益智</span>
                         <div class="game-rating">⭐⭐⭐⭐⭐</div>
-                    </div>
-                </div>
-
-                <div class="game-card" data-category="reaction" onclick="openGame('clicker')">
-                    <div class="game-thumbnail" style="background: linear-gradient(135deg, #f43f5e, #f59e0b);"><span class="game-icon">👆</span></div>
-                    <div class="game-info">
-                        <h3 class="game-title">疯狂点击</h3>
-                        <span class="game-category">反应</span>
-                        <div class="game-rating">⭐⭐⭐⭐</div>
                     </div>
                 </div>
 
