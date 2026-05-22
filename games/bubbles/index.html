@@ -323,8 +323,9 @@
         });
 
         canvas.addEventListener('click', handleClick);
-        // Initialize but don't start until user begins
-        bubbles = [];
+        // Draw empty canvas initially
+        ctx.fillStyle = '#16162a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         score = 0;
         updateScore();
     </script>

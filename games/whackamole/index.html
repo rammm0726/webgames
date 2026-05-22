@@ -94,12 +94,27 @@
             object-fit: contain;
         }
         .mole::before {
-            content: '🐹';
-            font-size: 4rem;
+            content: '';
             position: absolute;
-            bottom: -10px;
+            bottom: -5px;
             left: 50%;
             transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 50% 50% 45% 45%;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3);
+        }
+        .mole::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 15px;
+            background: linear-gradient(135deg, #fcd34d, #fbbf24);
+            border-radius: 50%;
         }
         .btn {
             background: linear-gradient(135deg, #22c55e, #14b8a6);
