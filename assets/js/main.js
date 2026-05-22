@@ -39,15 +39,26 @@ function showCategory(category) {
     tabs.forEach(tab => tab.classList.remove('active'));
     navLinks.forEach(link => link.classList.remove('active'));
     
-    const activeTab = document.querySelector(`.category-tab[onclick="showCategory('${category}')"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    }
+    // 激活对应的分类按钮
+    tabs.forEach(tab => {
+        if (tab.getAttribute('data-category') === category) {
+            tab.classList.add('active');
+        }
+    });
     
-    const activeNavLink = document.querySelector(`.nav a[onclick="showCategory('${category}')"]`);
-    if (activeNavLink) {
-        activeNavLink.classList.add('active');
-    }
+    // 激活对应的导航链接（通过文本匹配）
+    const categoryNames = {
+        'all': '首页',
+        'puzzle': '益智',
+        'relax': '放松',
+        'reaction': '反应',
+        'classic': '经典'
+    };
+    navLinks.forEach(link => {
+        if (link.textContent.trim() === categoryNames[category]) {
+            link.classList.add('active');
+        }
+    });
     
     games.forEach(game => {
         if (category === 'all') {
