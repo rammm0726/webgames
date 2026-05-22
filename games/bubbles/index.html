@@ -292,8 +292,8 @@
         function startGame() {
             gameStarted = true;
             paused = false;
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('pauseOverlay').classList.add('hidden');
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
             init();
         }
 
@@ -302,9 +302,9 @@
             paused = !paused;
             const overlay = document.getElementById('pauseOverlay');
             if (paused) {
-                overlay.classList.remove('hidden');
+                overlay.style.display = 'flex';
             } else {
-                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
             }
         }
 

@@ -276,7 +276,7 @@
                 for (let j = 0; j < 4; j++) {
                     if (board[i][j] === 2048) {
                         document.getElementById('finalScore').textContent = score;
-                        document.getElementById('gameOver').classList.remove('hidden');
+                        document.getElementById('gameOver').style.display = 'flex';
                         return;
                     }
                     if (board[i][j] === 0) return;
@@ -285,14 +285,15 @@
                 }
             }
             document.getElementById('finalScore').textContent = score;
-            document.getElementById('gameOver').classList.remove('hidden');
+            document.getElementById('gameOver').style.display = 'flex';
         }
 
         function newGame() {
             paused = false;
             gameStarted = true;
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('pauseOverlay').classList.add('hidden');
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
+            document.getElementById('gameOver').style.display = 'none';
             initBoard();
         }
 
@@ -301,9 +302,9 @@
             paused = !paused;
             const overlay = document.getElementById('pauseOverlay');
             if (paused) {
-                overlay.classList.remove('hidden');
+                overlay.style.display = 'flex';
             } else {
-                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
             }
         }
 
