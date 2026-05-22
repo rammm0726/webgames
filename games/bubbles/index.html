@@ -102,6 +102,7 @@
         }
         .start-screen p { color: #888; font-size: 1.2rem; }
 
+    </style>
 </head>
 <body>
     <div class="game-container">
@@ -114,6 +115,7 @@
         <div class="start-screen" id="startScreen">
             <h1>🫧 泡泡消除</h1>
             <p>按 空格键 或 Enter 开始游戏</p>
+            <button class="btn" onclick="startGame()">开始游戏</button>
             <p style="font-size: 0.9rem; color: #666;">点击泡泡消除它们，连续消除更多获得更高分数！</p>
         </div>
         <div class="score-box">
@@ -133,6 +135,8 @@
         let score = 0;
         let bubbles = [];
         let animationId;
+        let gameStarted = false;
+        let paused = false;
 
         const colors = [
             '#f472b6', '#fb923c', '#fbbf24', '#34d399', 
@@ -210,6 +214,10 @@
         }
 
         function animate() {
+            if (paused || !gameStarted) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             bubbles.forEach(bubble => {
@@ -248,6 +256,7 @@
         }
 
         function handleClick(e) {
+            if (!gameStarted || paused) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -279,8 +288,45 @@
             init();
         }
 
+        function startGame() {
+            gameStarted = true;
+            paused = false;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('pauseOverlay').classList.add('hidden');
+            init();
+        }
+
+        function togglePause() {
+            if (!gameStarted) return;
+            paused = !paused;
+            const overlay = document.getElementById('pauseOverlay');
+            if (paused) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                togglePause();
+                return;
+            }
+            
+            if (!gameStarted) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    startGame();
+                }
+                return;
+            }
+        });
+
         canvas.addEventListener('click', handleClick);
-        init();
+        // Initialize but don't start until user begins
+        bubbles = [];
+        score = 0;
+        updateScore();
     </script>
 </body>
 </html>
