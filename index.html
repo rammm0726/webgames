@@ -6,11 +6,12 @@
   <title>休闲小游戏</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="css/home.css">
 </head>
 <body>
-  <div class="container">
+  <div class="bg-particles" id="particles"></div>
+
+  <div class="main-content">
     <header class="home-header">
       <h1>🎮 休闲小游戏</h1>
       <p>简单放松，随时畅玩</p>
@@ -24,10 +25,30 @@
     </div>
 
     <div class="game-grid" id="gameGrid"></div>
+
+    <footer class="footer">
+      <p>Made with ❤️ | 休闲小游戏合集</p>
+    </footer>
   </div>
 
   <script src="js/games-config.js"></script>
   <script>
+    function createParticles() {
+      const container = document.getElementById('particles');
+      const colors = ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)'];
+      for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.width = (Math.random() * 30 + 10) + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.animationDuration = (Math.random() * 20 + 10) + 's';
+        particle.style.animationDelay = (Math.random() * 10) + 's';
+        container.appendChild(particle);
+      }
+    }
+
     const grid = document.getElementById('gameGrid');
     const filter = document.getElementById('categoryFilter');
     let currentCategory = 'all';
@@ -40,7 +61,7 @@
       grid.innerHTML = filtered.map(game => {
         const best = getBestScore(game.id);
         return `
-          <a href="${game.path}" class="game-card card">
+          <a href="${game.path}" class="game-card">
             <div class="card-icon" style="background: ${game.gradient}">
               <span>${game.icon}</span>
             </div>
@@ -48,7 +69,7 @@
               <div class="card-title">${game.name}</div>
               <div class="card-desc">${game.description}</div>
               <div class="card-meta">
-                <span class="badge badge-primary">${game.category}</span>
+                <span class="card-badge">${game.category}</span>
                 <span class="best-score">${best > 0 ? '最高分: ' + best : ''}</span>
               </div>
             </div>
@@ -66,6 +87,7 @@
       renderGames(currentCategory);
     });
 
+    createParticles();
     renderGames('all');
   </script>
 </body>
