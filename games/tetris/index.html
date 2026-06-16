@@ -19,8 +19,7 @@
       gap: 12px;
     }
     .next-piece-box {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.3);
       padding: 16px;
       border-radius: 12px;
       text-align: center;
@@ -140,6 +139,7 @@
           <li>📱 手机：虚拟按键控制</li>
           <li>消行得分：1行100，2行300，3行500，4行800</li>
           <li>⚡ 消行越多，速度越快</li>
+          <li>⌨️ Enter=开始 Space/Esc=暂停</li>
           <li>🏆 挑战最高分！</li>
         </ul>
       </div>
@@ -258,6 +258,7 @@
     }
 
     function drop() {
+      if (!current) return;
       if (isValid(current.shape, current.x, current.y + 1)) {
         current.y++;
       } else {
@@ -297,10 +298,10 @@
     }
 
     function draw() {
-      ctx.fillStyle = 'rgba(248, 249, 250, 0.3)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = 'rgba(233, 236, 239, 0.3)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
       ctx.lineWidth = 0.5;
       for (let r = 0; r <= ROWS; r++) {
         ctx.beginPath();
@@ -324,28 +325,41 @@
             ctx.fill();
           }
 
-      for (let r = 0; r < current.shape.length; r++)
-        for (let c = 0; c < current.shape[r].length; c++)
-          if (current.shape[r][c]) {
-            ctx.fillStyle = COLORS[current.color];
-            ctx.beginPath();
-            ctx.roundRect((current.x + c) * CELL + 1, (current.y + r) * CELL + 1, CELL - 2, CELL - 2, 3);
-            ctx.fill();
-          }
+      if (current) {
+        for (let r = 0; r < current.shape.length; r++)
+          for (let c = 0; c < current.shape[r].length; c++)
+            if (current.shape[r][c]) {
+              ctx.fillStyle = COLORS[current.color];
+              ctx.beginPath();
+              ctx.roundRect((current.x + c) * CELL + 1, (current.y + r) * CELL + 1, CELL - 2, CELL - 2, 3);
+              ctx.fill();
+            }
+      }
 
-      nextCtx.fillStyle = 'rgba(248, 249, 250, 0.3)';
+      nextCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
       nextCtx.fillRect(0, 0, 80, 80);
-      for (let r = 0; r < nextPiece.shape.length; r++)
-        for (let c = 0; c < nextPiece.shape[r].length; c++)
-          if (nextPiece.shape[r][c]) {
-            nextCtx.fillStyle = COLORS[nextPiece.color];
-            nextCtx.beginPath();
-            nextCtx.roundRect(c * 18 + 5, r * 18 + 5, 16, 16, 3);
-            nextCtx.fill();
-          }
+      if (nextPiece) {
+        for (let r = 0; r < nextPiece.shape.length; r++)
+          for (let c = 0; c < nextPiece.shape[r].length; c++)
+            if (nextPiece.shape[r][c]) {
+              nextCtx.fillStyle = COLORS[nextPiece.color];
+              nextCtx.beginPath();
+              nextCtx.roundRect(c * 18 + 5, r * 18 + 5, 16, 16, 3);
+              nextCtx.fill();
+            }
+      }
     }
 
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { startTetrisGame(); return; }
+      if (e.key === ' ') { e.preventDefault(); togglePause(pauseTetris, resumeTetris); return; }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!gamePaused) { togglePause(pauseTetris, resumeTetris); }
+        else { window.location.href = '../../index.html'; }
+        return;
+      }
+      if (!current) return;
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
@@ -362,7 +376,6 @@
           drop();
           break;
         case 'ArrowUp':
-        case ' ':
           e.preventDefault();
           const rotated = rotate(current.shape);
           if (isValid(rotated, current.x, current.y)) current.shape = rotated;

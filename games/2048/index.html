@@ -18,10 +18,9 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      padding: 8px;
-      background: rgba(190, 176, 165, 0.3);
+      padding: 12px;
+      background: rgba(139, 126, 118, 0.8);
       border-radius: 12px;
-      backdrop-filter: blur(10px);
     }
     .cell {
       width: 72px;
@@ -31,22 +30,22 @@
       justify-content: center;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 24px;
+      font-size: 28px;
       color: white;
       transition: all 0.15s ease;
     }
-    .cell-0 { background: rgba(255, 255, 255, 0.2); color: transparent; }
+    .cell-0 { background: rgba(238, 228, 218, 0.5); color: transparent; }
     .cell-2 { background: #EEE4DA; color: #776E65; }
     .cell-4 { background: #EDE0C8; color: #776E65; }
     .cell-8 { background: #F2B179; }
     .cell-16 { background: #F59563; }
     .cell-32 { background: #F67C5F; }
     .cell-64 { background: #F65E3B; }
-    .cell-128 { background: #EDCF72; font-size: 20px; }
-    .cell-256 { background: #EDCC61; font-size: 20px; }
-    .cell-512 { background: #EDC850; font-size: 20px; }
-    .cell-1024 { background: #EDC53F; font-size: 16px; }
-    .cell-2048 { background: #EDC22E; font-size: 16px; }
+    .cell-128 { background: #EDCF72; font-size: 22px; }
+    .cell-256 { background: #EDCC61; font-size: 22px; }
+    .cell-512 { background: #EDC850; font-size: 22px; }
+    .cell-1024 { background: #EDC53F; font-size: 18px; }
+    .cell-2048 { background: #EDC22E; font-size: 18px; }
     .cell-max { background: #3C3A32; font-size: 14px; }
     .score-row {
       display: flex;
@@ -54,7 +53,6 @@
     }
     .score-box {
       background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
       padding: 12px 24px;
       border-radius: 12px;
       text-align: center;
@@ -69,15 +67,11 @@
       font-weight: 700;
       color: white;
     }
-    .actions {
-      display: flex;
-      gap: 8px;
-    }
     @media (max-width: 480px) {
       .cell {
         width: 64px;
         height: 64px;
-        font-size: 20px;
+        font-size: 24px;
       }
     }
   </style>
@@ -128,6 +122,7 @@
           <li>🎯 目标是合成 2048！</li>
           <li>📱 手机：上下左右滑动</li>
           <li>⌨️ 电脑：方向键控制</li>
+          <li>⌨️ Enter=开始 Esc=返回</li>
           <li>🏆 挑战最高分！</li>
         </ul>
       </div>
@@ -147,6 +142,7 @@
       addRandomTile();
       render();
       document.querySelector('.game-over-overlay').classList.remove('show');
+      gameStarted = true;
     }
 
     function addRandomTile() {
@@ -174,13 +170,11 @@
 
     function slide(row) {
       let arr = row.filter(v => v !== 0);
-      let merged = false;
       for (let i = 0; i < arr.length - 1; i++) {
         if (arr[i] === arr[i + 1]) {
           arr[i] *= 2;
           score2048 += arr[i];
           arr.splice(i + 1, 1);
-          merged = true;
         }
       }
       while (arr.length < 4) arr.push(0);
@@ -188,6 +182,7 @@
     }
 
     function move(dir) {
+      if (!gameStarted || gamePaused) return;
       let moved = false;
       const oldGrid = grid.map(r => [...r]);
 
@@ -235,6 +230,12 @@
     }
 
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { init2048(); return; }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        window.location.href = '../../index.html';
+        return;
+      }
       const keyMap = {
         'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right'
       };

@@ -43,6 +43,7 @@
           <li>🍎 吃到红色食物得分 +10</li>
           <li>⚡ 分数越高，速度越快</li>
           <li>💀 撞墙或撞到自己游戏结束</li>
+          <li>⌨️ Enter=开始 Space/Esc=暂停</li>
           <li>🏆 挑战最高分！</li>
         </ul>
       </div>
@@ -146,10 +147,10 @@
     }
 
     function draw() {
-      ctx.fillStyle = '#F8F9FA';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = '#E9ECEF';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
       ctx.lineWidth = 0.5;
       for (let i = 0; i <= cols; i++) {
         ctx.beginPath();
@@ -178,6 +179,14 @@
     }
 
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { startSnake(); return; }
+      if (e.key === ' ') { e.preventDefault(); togglePause(pauseSnake, resumeSnake); return; }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!gamePaused) { togglePause(pauseSnake, resumeSnake); }
+        else { window.location.href = '../../index.html'; }
+        return;
+      }
       const keyMap = {
         'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right',
         'w': 'up', 's': 'down', 'a': 'left', 'd': 'right',
