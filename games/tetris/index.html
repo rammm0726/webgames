@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>俄罗斯方块</title>
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/reset.css">
+  <link rel="stylesheet" href="../../css/game.css">
+  <style>
+    .tetris-wrapper {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .next-piece-box {
+      background: var(--card-bg);
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .next-piece-box .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    #nextCanvas {
+      display: block;
+      margin: 0 auto;
+    }
+    .touch-buttons {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+    }
+    .touch-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .touch-btn {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(108, 92, 231, 0.15);
+      border: 1px solid rgba(108, 92, 231, 0.3);
+      border-radius: 12px;
+      font-size: 20px;
+      color: var(--primary);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    .touch-btn:active {
+      background: var(--primary);
+      color: white;
+    }
+    .touch-btn.wide {
+      width: 120px;
+    }
+    @media (max-width: 480px) {
+      .tetris-wrapper {
+        flex-direction: column;
+        align-items: center;
+      }
+      .touch-buttons {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body class="game-page">
+  <div class="game-topbar">
+    <button class="back-btn">← 返回</button>
+    <span class="game-title">俄罗斯方块</span>
+    <span class="game-score">0</span>
+  </div>
+
+  <div class="game-container">
+    <div class="tetris-wrapper">
+      <canvas id="canvas"></canvas>
+      <div class="side-panel">
+        <div class="next-piece-box">
+          <div class="label">下一个</div>
+          <canvas id="nextCanvas" width="80" height="80"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="touch-buttons">
+    <div class="touch-row">
+      <button class="touch-btn" data-action="rotate">↻</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" data-action="left">◀</button>
+      <button class="touch-btn" data-action="down">▼</button>
+      <button class="touch-btn" data-action="right">▶</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn wide" data-action="drop">⏬</button>
+    </div>
+  </div>
+
+  <div class="game-over-overlay">
+    <div class="game-over-box">
+      <h2>游戏结束</h2>
+      <div class="final-score">0</div>
+      <button class="btn btn-primary restart-btn">再来一局</button>
+    </div>
+  </div>
+
+  <script src="../../js/common.js"></script>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nextCtx = nextCanvas.getContext('2d');
+
+    const COLS = 10;
+    const ROWS = 20;
+    const CELL = 22;
+    const COLORS = ['#00CEC9', '#FDCB6E', '#E17055', '#6C5CE7', '#00B894', '#0984E3', '#FD79A8'];
+
+    const SHAPES = [
+      [[1,1,1,1]],
+      [[1,1],[1,1]],
+      [[0,1,0],[1,1,1]],
+      [[1,0,0],[1,1,1]],
+      [[0,0,1],[1,1,1]],
+      [[1,1,0],[0,1,1]],
+      [[0,1,1],[1,1,0]]
+    ];
+
+    let board, current, nextPiece, score, lines, gameLoop, dropInterval;
+
+    function initTetris() {
+      canvas.width = COLS * CELL;
+      canvas.height = ROWS * CELL;
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+      score = 0;
+      lines = 0;
+      dropInterval = 800;
+      nextPiece = randomPiece();
+      spawnPiece();
+      updateScore(0);
+      startTetris();
+    }
+
+    function randomPiece() {
+      const idx = Math.floor(Math.random() * SHAPES.length);
+      return { shape: SHAPES[idx].map(r => [...r]), color: idx, x: 3, y: 0 };
+    }
+
+    function spawnPiece() {
+      current = nextPiece;
+      nextPiece = randomPiece();
+      current.x = 3;
+      current.y = 0;
+      if (!isValid(current.shape, current.x, current.y)) {
+        clearInterval(gameLoop);
+        playSound('gameover');
+        setBestScore('tetris', score);
+        showGameOver(score, initTetris);
+      }
+    }
+
+    function isValid(shape, px, py) {
+      for (let r = 0; r < shape.length; r++)
+        for (let c = 0; c < shape[r].length; c++)
+          if (shape[r][c]) {
+            const nx = px + c;
+            const ny = py + r;
+            if (nx < 0 || nx >= COLS || ny >= ROWS) return false;
+            if (ny >= 0 && board[ny][nx]) return false;
+          }
+      return true;
+    }
+
+    function rotate(shape) {
+      const rows = shape.length;
+      const cols = shape[0].length;
+      const rotated = Array.from({ length: cols }, () => Array(rows).fill(0));
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          rotated[c][rows - 1 - r] = shape[r][c];
+      return rotated;
+    }
+
+    function lock() {
+      for (let r = 0; r < current.shape.length; r++)
+        for (let c = 0; c < current.shape[r].length; c++)
+          if (current.shape[r][c]) {
+            const ny = current.y + r;
+            if (ny >= 0) board[ny][current.x + c] = current.color + 1;
+          }
+      clearLines();
+      spawnPiece();
+    }
+
+    function clearLines() {
+      let cleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (board[r].every(v => v !== 0)) {
+          board.splice(r, 1);
+          board.unshift(Array(COLS).fill(0));
+          cleared++;
+          r++;
+        }
+      }
+      if (cleared > 0) {
+        const pts = [0, 100, 300, 500, 800];
+        score += pts[cleared];
+        lines += cleared;
+        updateScore(score);
+        playSound('score');
+        dropInterval = Math.max(100, 800 - lines * 20);
+        clearInterval(gameLoop);
+        gameLoop = setInterval(drop, dropInterval);
+      }
+    }
+
+    function drop() {
+      if (isValid(current.shape, current.x, current.y + 1)) {
+        current.y++;
+      } else {
+        lock();
+      }
+      draw();
+    }
+
+    function hardDrop() {
+      while (isValid(current.shape, current.x, current.y + 1)) {
+        current.y++;
+        score += 2;
+      }
+      updateScore(score);
+      lock();
+      draw();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#F8F9FA';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#E9ECEF';
+      ctx.lineWidth = 0.5;
+      for (let r = 0; r <= ROWS; r++) {
+        ctx.beginPath();
+        ctx.moveTo(0, r * CELL);
+        ctx.lineTo(canvas.width, r * CELL);
+        ctx.stroke();
+      }
+      for (let c = 0; c <= COLS; c++) {
+        ctx.beginPath();
+        ctx.moveTo(c * CELL, 0);
+        ctx.lineTo(c * CELL, canvas.height);
+        ctx.stroke();
+      }
+
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+          if (board[r][c]) {
+            ctx.fillStyle = COLORS[board[r][c] - 1];
+            ctx.beginPath();
+            ctx.roundRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2, 3);
+            ctx.fill();
+          }
+
+      for (let r = 0; r < current.shape.length; r++)
+        for (let c = 0; c < current.shape[r].length; c++)
+          if (current.shape[r][c]) {
+            ctx.fillStyle = COLORS[current.color];
+            ctx.beginPath();
+            ctx.roundRect((current.x + c) * CELL + 1, (current.y + r) * CELL + 1, CELL - 2, CELL - 2, 3);
+            ctx.fill();
+          }
+
+      nextCtx.fillStyle = '#F8F9FA';
+      nextCtx.fillRect(0, 0, 80, 80);
+      for (let r = 0; r < nextPiece.shape.length; r++)
+        for (let c = 0; c < nextPiece.shape[r].length; c++)
+          if (nextPiece.shape[r][c]) {
+            nextCtx.fillStyle = COLORS[nextPiece.color];
+            nextCtx.beginPath();
+            nextCtx.roundRect(c * 18 + 5, r * 18 + 5, 16, 16, 3);
+            nextCtx.fill();
+          }
+    }
+
+    function startTetris() {
+      clearInterval(gameLoop);
+      gameLoop = setInterval(drop, dropInterval);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (isValid(current.shape, current.x - 1, current.y)) current.x--;
+          draw();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (isValid(current.shape, current.x + 1, current.y)) current.x++;
+          draw();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          drop();
+          break;
+        case 'ArrowUp':
+        case ' ':
+          e.preventDefault();
+          const rotated = rotate(current.shape);
+          if (isValid(rotated, current.x, current.y)) current.shape = rotated;
+          draw();
+          break;
+      }
+    });
+
+    document.querySelectorAll('.touch-btn').forEach(btn => {
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const action = btn.dataset.action;
+        switch (action) {
+          case 'left':
+            if (isValid(current.shape, current.x - 1, current.y)) current.x--;
+            draw();
+            break;
+          case 'right':
+            if (isValid(current.shape, current.x + 1, current.y)) current.x++;
+            draw();
+            break;
+          case 'down':
+            drop();
+            break;
+          case 'rotate':
+            const rotated = rotate(current.shape);
+            if (isValid(rotated, current.x, current.y)) current.shape = rotated;
+            draw();
+            break;
+          case 'drop':
+            hardDrop();
+            break;
+        }
+      });
+    });
+
+    initGamePage('俄罗斯方块');
+    initTetris();
+  </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+.home-header {
+  text-align: center;
+  padding: var(--space-2xl) 0 var(--space-xl);
+}
+
+.home-header h1 {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-sm);
+}
+
+.home-header p {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+}
+
+.category-filter {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 999px;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+
+.category-btn:hover,
+.category-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  padding-bottom: var(--space-2xl);
+}
+
+.game-card {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.game-card .card-icon {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+  font-size: 64px;
+}
+
+.game-card .card-body {
+  padding: var(--space-md);
+}
+
+.game-card .card-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.game-card .card-desc {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.game-card .card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.game-card .best-score {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+  .home-header h1 {
+    font-size: var(--font-xl);
+  }
+
+  .game-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .game-card .card-icon {
+    height: 120px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .game-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

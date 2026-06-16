@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>休闲小游戏</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+  <div class="container">
+    <header class="home-header">
+      <h1>🎮 休闲小游戏</h1>
+      <p>简单放松，随时畅玩</p>
+    </header>
+
+    <div class="category-filter" id="categoryFilter">
+      <button class="category-btn active" data-category="all">全部</button>
+      <button class="category-btn" data-category="休闲">休闲</button>
+      <button class="category-btn" data-category="益智">益智</button>
+      <button class="category-btn" data-category="射击">射击</button>
+    </div>
+
+    <div class="game-grid" id="gameGrid"></div>
+  </div>
+
+  <script src="js/games-config.js"></script>
+  <script>
+    const grid = document.getElementById('gameGrid');
+    const filter = document.getElementById('categoryFilter');
+    let currentCategory = 'all';
+
+    function renderGames(category) {
+      const filtered = category === 'all'
+        ? GamesConfig
+        : GamesConfig.filter(g => g.category === category);
+
+      grid.innerHTML = filtered.map(game => {
+        const best = getBestScore(game.id);
+        return `
+          <a href="${game.path}" class="game-card card">
+            <div class="card-icon" style="background: ${game.gradient}">
+              <span>${game.icon}</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">${game.name}</div>
+              <div class="card-desc">${game.description}</div>
+              <div class="card-meta">
+                <span class="badge badge-primary">${game.category}</span>
+                <span class="best-score">${best > 0 ? '最高分: ' + best : ''}</span>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    filter.addEventListener('click', (e) => {
+      const btn = e.target.closest('.category-btn');
+      if (!btn) return;
+      filter.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategory = btn.dataset.category;
+      renderGames(currentCategory);
+    });
+
+    renderGames('all');
+  </script>
+</body>
+</html>

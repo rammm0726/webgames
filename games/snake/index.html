@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>贪吃蛇</title>
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/reset.css">
+  <link rel="stylesheet" href="../../css/game.css">
+</head>
+<body class="game-page">
+  <div class="game-topbar">
+    <button class="back-btn">← 返回</button>
+    <span class="game-title">贪吃蛇</span>
+    <span class="game-score">0</span>
+  </div>
+
+  <div class="game-container">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="game-over-overlay">
+    <div class="game-over-box">
+      <h2>游戏结束</h2>
+      <div class="final-score">0</div>
+      <button class="btn btn-primary restart-btn">再来一局</button>
+    </div>
+  </div>
+
+  <div id="touchArea" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;"></div>
+
+  <script src="../../js/common.js"></script>
+  <script src="../../js/touch-controls.js"></script>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 20;
+    let cols, rows, snake, food, direction, nextDirection, score, gameLoop, speed;
+
+    function init() {
+      const size = Math.min(window.innerWidth - 32, window.innerHeight - 200, 400);
+      canvas.width = size;
+      canvas.height = size;
+      cols = Math.floor(size / gridSize);
+      rows = Math.floor(size / gridSize);
+
+      snake = [{ x: Math.floor(cols / 2), y: Math.floor(rows / 2) }];
+      direction = 'right';
+      nextDirection = 'right';
+      score = 0;
+      speed = 150;
+      placeFood();
+      updateScore(0);
+      startGame();
+    }
+
+    function placeFood() {
+      do {
+        food = {
+          x: Math.floor(Math.random() * cols),
+          y: Math.floor(Math.random() * rows)
+        };
+      } while (snake.some(s => s.x === food.x && s.y === food.y));
+    }
+
+    function startGame() {
+      clearInterval(gameLoop);
+      gameLoop = setInterval(update, speed);
+    }
+
+    function update() {
+      direction = nextDirection;
+      const head = { ...snake[0] };
+
+      switch (direction) {
+        case 'up': head.y--; break;
+        case 'down': head.y++; break;
+        case 'left': head.x--; break;
+        case 'right': head.x++; break;
+      }
+
+      if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows ||
+          snake.some(s => s.x === head.x && s.y === head.y)) {
+        clearInterval(gameLoop);
+        playSound('gameover');
+        setBestScore('snake', score);
+        showGameOver(score, init);
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        updateScore(score);
+        playSound('eat');
+        placeFood();
+        if (speed > 80) {
+          speed -= 3;
+          clearInterval(gameLoop);
+          gameLoop = setInterval(update, speed);
+        }
+      } else {
+        snake.pop();
+      }
+
+      draw();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#F8F9FA';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#E9ECEF';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= cols; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * gridSize, 0);
+        ctx.lineTo(i * gridSize, canvas.height);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= rows; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, i * gridSize);
+        ctx.lineTo(canvas.width, i * gridSize);
+        ctx.stroke();
+      }
+
+      snake.forEach((s, i) => {
+        ctx.fillStyle = i === 0 ? '#00B894' : '#00CEC9';
+        ctx.beginPath();
+        ctx.roundRect(s.x * gridSize + 1, s.y * gridSize + 1, gridSize - 2, gridSize - 2, 4);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = '#E17055';
+      ctx.beginPath();
+      ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      const keyMap = {
+        'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right',
+        'w': 'up', 's': 'down', 'a': 'left', 'd': 'right',
+        'W': 'up', 'S': 'down', 'A': 'left', 'D': 'right'
+      };
+      const dir = keyMap[e.key];
+      if (!dir) return;
+      const opposites = { up: 'down', down: 'up', left: 'right', right: 'left' };
+      if (opposites[dir] !== direction) {
+        nextDirection = dir;
+      }
+    });
+
+    initGamePage('贪吃蛇');
+
+    if (isTouchDevice()) {
+      new TouchControls(document.getElementById('touchArea'), {
+        onDirection: (dir) => {
+          const opposites = { up: 'down', down: 'up', left: 'right', right: 'left' };
+          if (opposites[dir] !== direction) {
+            nextDirection = dir;
+          }
+        }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

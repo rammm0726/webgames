@@ -1,0 +1,108 @@
+.game-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.game-topbar .back-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.game-topbar .back-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.game-topbar .game-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+}
+
+.game-topbar .game-score {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 60px;
+  text-align: right;
+}
+
+.game-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  overflow: hidden;
+}
+
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.game-over-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-over-box {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  min-width: 280px;
+  box-shadow: var(--shadow-hover);
+}
+
+.game-over-box h2 {
+  font-size: var(--font-xl);
+  margin-bottom: var(--space-sm);
+}
+
+.game-over-box .final-score {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: var(--space-lg);
+}
+
+.game-over-box .btn {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .game-topbar {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .game-container {
+    padding: var(--space-sm);
+  }
+}
