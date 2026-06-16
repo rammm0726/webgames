@@ -13,35 +13,37 @@ function toggleFullscreen(element) {
   }
 }
 
+let _audioCtx = null;
+
 function playSound(type) {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = _audioCtx.createOscillator();
+  const gain = _audioCtx.createGain();
   osc.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(_audioCtx.destination);
   gain.gain.value = 0.1;
 
   switch (type) {
     case 'eat':
       osc.frequency.value = 600;
       osc.start();
-      osc.stop(ctx.currentTime + 0.1);
+      osc.stop(_audioCtx.currentTime + 0.1);
       break;
     case 'score':
       osc.frequency.value = 800;
       osc.start();
-      osc.stop(ctx.currentTime + 0.15);
+      osc.stop(_audioCtx.currentTime + 0.15);
       break;
     case 'gameover':
       osc.frequency.value = 200;
       osc.type = 'sawtooth';
       osc.start();
-      osc.stop(ctx.currentTime + 0.5);
+      osc.stop(_audioCtx.currentTime + 0.5);
       break;
     case 'click':
       osc.frequency.value = 400;
       osc.start();
-      osc.stop(ctx.currentTime + 0.05);
+      osc.stop(_audioCtx.currentTime + 0.05);
       break;
   }
 }

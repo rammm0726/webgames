@@ -176,6 +176,7 @@
 
     function hardDrop() {
       while (valid(cur.s, cur.x, cur.y + 1)) { cur.y++; sc += 2; }
+      document.getElementById('topScore').textContent = sc;
       lock();
       draw();
     }
