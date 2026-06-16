@@ -19,7 +19,7 @@
       gap: 12px;
     }
     .next-piece-box {
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.5);
       padding: 16px;
       border-radius: 12px;
       text-align: center;
@@ -53,8 +53,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.4);
       border-radius: 12px;
       font-size: 20px;
       color: white;
@@ -89,10 +89,10 @@
   </div>
 
   <div class="game-controls">
-    <button class="control-btn start-btn" onclick="startTetrisGame()">▶️ 开始</button>
-    <button class="control-btn pause-btn" onclick="togglePause(pauseTetris, resumeTetris)">⏸️ 暂停</button>
-    <button class="control-btn stop-btn" onclick="stopTetris()">⏹️ 停止</button>
-    <button class="control-btn help-btn" onclick="showHelp()">❓ 帮助</button>
+    <button class="control-btn start-btn" id="startBtn">▶️ 开始</button>
+    <button class="control-btn pause-btn" id="pauseBtn">⏸️ 暂停</button>
+    <button class="control-btn stop-btn" id="stopBtn">⏹️ 停止</button>
+    <button class="control-btn help-btn" id="helpBtn">❓ 帮助</button>
   </div>
 
   <div class="game-container">
@@ -121,15 +121,15 @@
     </div>
   </div>
 
-  <div class="game-over-overlay">
+  <div class="game-over-overlay" id="gameOverOverlay">
     <div class="game-over-box">
       <h2>游戏结束</h2>
-      <div class="final-score">0</div>
-      <button class="btn btn-primary restart-btn">再来一局</button>
+      <div class="final-score" id="finalScore">0</div>
+      <button class="btn btn-primary restart-btn" id="restartBtn">再来一局</button>
     </div>
   </div>
 
-  <div class="help-overlay">
+  <div class="help-overlay" id="helpOverlay">
     <div class="help-box">
       <h2>❓ 游戏说明</h2>
       <div class="help-content">
@@ -143,23 +143,23 @@
           <li>🏆 挑战最高分！</li>
         </ul>
       </div>
-      <button class="btn btn-primary close-btn" onclick="hideHelp()">知道了</button>
+      <button class="btn btn-primary close-btn" id="closeHelpBtn">知道了</button>
     </div>
   </div>
 
   <script src="../../js/common.js"></script>
   <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const nextCanvas = document.getElementById('nextCanvas');
-    const nextCtx = nextCanvas.getContext('2d');
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var nextCanvas = document.getElementById('nextCanvas');
+    var nextCtx = nextCanvas.getContext('2d');
 
-    const COLS = 10;
-    const ROWS = 20;
-    const CELL = 22;
-    const COLORS = ['#00CEC9', '#FDCB6E', '#E17055', '#6C5CE7', '#00B894', '#0984E3', '#FD79A8'];
+    var COLS = 10;
+    var ROWS = 20;
+    var CELL = 22;
+    var COLORS = ['#00CEC9', '#FDCB6E', '#E17055', '#6C5CE7', '#00B894', '#0984E3', '#FD79A8'];
 
-    const SHAPES = [
+    var SHAPES = [
       [[1,1,1,1]],
       [[1,1],[1,1]],
       [[0,1,0],[1,1,1]],
@@ -169,12 +169,18 @@
       [[0,1,1],[1,1,0]]
     ];
 
-    let board, current, nextPiece, score, lines, gameLoop, dropInterval;
+    var board, current, nextPiece, score, lines, gameLoop, dropInterval;
 
     function initTetris() {
       canvas.width = COLS * CELL;
       canvas.height = ROWS * CELL;
-      board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+      board = [];
+      for (var r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (var c = 0; c < COLS; c++) {
+          board[r][c] = 0;
+        }
+      }
       score = 0;
       lines = 0;
       dropInterval = 800;
@@ -185,8 +191,12 @@
     }
 
     function randomPiece() {
-      const idx = Math.floor(Math.random() * SHAPES.length);
-      return { shape: SHAPES[idx].map(r => [...r]), color: idx, x: 3, y: 0 };
+      var idx = Math.floor(Math.random() * SHAPES.length);
+      var shape = [];
+      for (var r = 0; r < SHAPES[idx].length; r++) {
+        shape[r] = SHAPES[idx][r].slice();
+      }
+      return { shape: shape, color: idx, x: 3, y: 0 };
     }
 
     function spawnPiece() {
@@ -195,40 +205,44 @@
       current.x = 3;
       current.y = 0;
       if (!isValid(current.shape, current.x, current.y)) {
-        clearInterval(gameLoop);
+        stopTetrisLoop();
         playSound('gameover');
         setBestScore('tetris', score);
-        showGameOver(score, startTetrisGame);
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('gameOverOverlay').classList.add('show');
       }
     }
 
     function isValid(shape, px, py) {
-      for (let r = 0; r < shape.length; r++)
-        for (let c = 0; c < shape[r].length; c++)
+      for (var r = 0; r < shape.length; r++)
+        for (var c = 0; c < shape[r].length; c++)
           if (shape[r][c]) {
-            const nx = px + c;
-            const ny = py + r;
+            var nx = px + c;
+            var ny = py + r;
             if (nx < 0 || nx >= COLS || ny >= ROWS) return false;
             if (ny >= 0 && board[ny][nx]) return false;
           }
       return true;
     }
 
-    function rotate(shape) {
-      const rows = shape.length;
-      const cols = shape[0].length;
-      const rotated = Array.from({ length: cols }, () => Array(rows).fill(0));
-      for (let r = 0; r < rows; r++)
-        for (let c = 0; c < cols; c++)
+    function rotateShape(shape) {
+      var rows = shape.length;
+      var cols = shape[0].length;
+      var rotated = [];
+      for (var c = 0; c < cols; c++) {
+        rotated[c] = [];
+        for (var r = 0; r < rows; r++) {
           rotated[c][rows - 1 - r] = shape[r][c];
+        }
+      }
       return rotated;
     }
 
     function lock() {
-      for (let r = 0; r < current.shape.length; r++)
-        for (let c = 0; c < current.shape[r].length; c++)
+      for (var r = 0; r < current.shape.length; r++)
+        for (var c = 0; c < current.shape[r].length; c++)
           if (current.shape[r][c]) {
-            const ny = current.y + r;
+            var ny = current.y + r;
             if (ny >= 0) board[ny][current.x + c] = current.color + 1;
           }
       clearLines();
@@ -236,24 +250,30 @@
     }
 
     function clearLines() {
-      let cleared = 0;
-      for (let r = ROWS - 1; r >= 0; r--) {
-        if (board[r].every(v => v !== 0)) {
+      var cleared = 0;
+      for (var r = ROWS - 1; r >= 0; r--) {
+        var full = true;
+        for (var c = 0; c < COLS; c++) {
+          if (board[r][c] === 0) { full = false; break; }
+        }
+        if (full) {
           board.splice(r, 1);
-          board.unshift(Array(COLS).fill(0));
+          var newRow = [];
+          for (var c = 0; c < COLS; c++) newRow[c] = 0;
+          board.unshift(newRow);
           cleared++;
           r++;
         }
       }
       if (cleared > 0) {
-        const pts = [0, 100, 300, 500, 800];
+        var pts = [0, 100, 300, 500, 800];
         score += pts[cleared];
         lines += cleared;
         updateScore(score);
         playSound('score');
         dropInterval = Math.max(100, 800 - lines * 20);
-        clearInterval(gameLoop);
-        gameLoop = setInterval(drop, dropInterval);
+        stopTetrisLoop();
+        startTetrisLoop();
       }
     }
 
@@ -277,89 +297,104 @@
       draw();
     }
 
+    function startTetrisLoop() {
+      if (gameLoop) clearInterval(gameLoop);
+      gameLoop = setInterval(drop, dropInterval);
+    }
+
+    function stopTetrisLoop() {
+      if (gameLoop) {
+        clearInterval(gameLoop);
+        gameLoop = null;
+      }
+    }
+
     function startTetrisGame() {
       initTetris();
-      startGame();
-      clearInterval(gameLoop);
-      gameLoop = setInterval(drop, dropInterval);
+      gameStarted = true;
+      gamePaused = false;
+      startTetrisLoop();
     }
 
     function pauseTetris() {
-      clearInterval(gameLoop);
+      stopTetrisLoop();
     }
 
     function resumeTetris() {
-      gameLoop = setInterval(drop, dropInterval);
+      startTetrisLoop();
     }
 
     function stopTetris() {
-      clearInterval(gameLoop);
+      stopTetrisLoop();
       initTetris();
+      gameStarted = false;
+      gamePaused = false;
     }
 
     function draw() {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillStyle = '#1a1a2e';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.lineWidth = 0.5;
-      for (let r = 0; r <= ROWS; r++) {
+      for (var r = 0; r <= ROWS; r++) {
         ctx.beginPath();
         ctx.moveTo(0, r * CELL);
         ctx.lineTo(canvas.width, r * CELL);
         ctx.stroke();
       }
-      for (let c = 0; c <= COLS; c++) {
+      for (var c = 0; c <= COLS; c++) {
         ctx.beginPath();
         ctx.moveTo(c * CELL, 0);
         ctx.lineTo(c * CELL, canvas.height);
         ctx.stroke();
       }
 
-      for (let r = 0; r < ROWS; r++)
-        for (let c = 0; c < COLS; c++)
+      for (var r = 0; r < ROWS; r++)
+        for (var c = 0; c < COLS; c++)
           if (board[r][c]) {
             ctx.fillStyle = COLORS[board[r][c] - 1];
-            ctx.beginPath();
-            ctx.roundRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2, 3);
-            ctx.fill();
+            ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2);
           }
 
       if (current) {
-        for (let r = 0; r < current.shape.length; r++)
-          for (let c = 0; c < current.shape[r].length; c++)
+        for (var r = 0; r < current.shape.length; r++)
+          for (var c = 0; c < current.shape[r].length; c++)
             if (current.shape[r][c]) {
               ctx.fillStyle = COLORS[current.color];
-              ctx.beginPath();
-              ctx.roundRect((current.x + c) * CELL + 1, (current.y + r) * CELL + 1, CELL - 2, CELL - 2, 3);
-              ctx.fill();
+              ctx.fillRect((current.x + c) * CELL + 1, (current.y + r) * CELL + 1, CELL - 2, CELL - 2);
             }
       }
 
-      nextCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      nextCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       nextCtx.fillRect(0, 0, 80, 80);
       if (nextPiece) {
-        for (let r = 0; r < nextPiece.shape.length; r++)
-          for (let c = 0; c < nextPiece.shape[r].length; c++)
+        for (var r = 0; r < nextPiece.shape.length; r++)
+          for (var c = 0; c < nextPiece.shape[r].length; c++)
             if (nextPiece.shape[r][c]) {
               nextCtx.fillStyle = COLORS[nextPiece.color];
-              nextCtx.beginPath();
-              nextCtx.roundRect(c * 18 + 5, r * 18 + 5, 16, 16, 3);
-              nextCtx.fill();
+              nextCtx.fillRect(c * 18 + 5, r * 18 + 5, 16, 16);
             }
       }
     }
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { startTetrisGame(); return; }
-      if (e.key === ' ') { e.preventDefault(); togglePause(pauseTetris, resumeTetris); return; }
-      if (e.key === 'Escape') {
+      if (e.key === ' ') {
         e.preventDefault();
-        if (!gamePaused) { togglePause(pauseTetris, resumeTetris); }
-        else { window.location.href = '../../index.html'; }
+        if (gameStarted) {
+          if (gamePaused) { resumeTetris(); gamePaused = false; }
+          else { pauseTetris(); gamePaused = true; }
+        }
         return;
       }
-      if (!current) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (gameStarted && !gamePaused) { pauseTetris(); gamePaused = true; }
+        else if (gamePaused) { window.location.href = '../../index.html'; }
+        return;
+      }
+      if (!current || !gameStarted || gamePaused) return;
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
@@ -377,17 +412,19 @@
           break;
         case 'ArrowUp':
           e.preventDefault();
-          const rotated = rotate(current.shape);
+          var rotated = rotateShape(current.shape);
           if (isValid(rotated, current.x, current.y)) current.shape = rotated;
           draw();
           break;
       }
     });
 
-    document.querySelectorAll('.touch-btn').forEach(btn => {
-      btn.addEventListener('touchstart', (e) => {
+    var touchBtns = document.querySelectorAll('.touch-btn');
+    for (var i = 0; i < touchBtns.length; i++) {
+      touchBtns[i].addEventListener('touchstart', function(e) {
         e.preventDefault();
-        const action = btn.dataset.action;
+        if (!current || !gameStarted || gamePaused) return;
+        var action = this.getAttribute('data-action');
         switch (action) {
           case 'left':
             if (isValid(current.shape, current.x - 1, current.y)) current.x--;
@@ -401,7 +438,7 @@
             drop();
             break;
           case 'rotate':
-            const rotated = rotate(current.shape);
+            var rotated = rotateShape(current.shape);
             if (isValid(rotated, current.x, current.y)) current.shape = rotated;
             draw();
             break;
@@ -410,7 +447,19 @@
             break;
         }
       });
+    }
+
+    document.getElementById('startBtn').addEventListener('click', function() { startTetrisGame(); });
+    document.getElementById('pauseBtn').addEventListener('click', function() {
+      if (gameStarted) {
+        if (gamePaused) { resumeTetris(); gamePaused = false; this.innerHTML = '⏸️ 暂停'; }
+        else { pauseTetris(); gamePaused = true; this.innerHTML = '▶️ 继续'; }
+      }
     });
+    document.getElementById('stopBtn').addEventListener('click', function() { stopTetris(); });
+    document.getElementById('helpBtn').addEventListener('click', function() { showHelp(); });
+    document.getElementById('restartBtn').addEventListener('click', function() { startTetrisGame(); });
+    document.getElementById('closeHelpBtn').addEventListener('click', function() { hideHelp(); });
 
     initGamePage('俄罗斯方块');
     initTetris();
