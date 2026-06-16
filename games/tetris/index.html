@@ -19,15 +19,15 @@
       gap: 12px;
     }
     .next-piece-box {
-      background: var(--card-bg);
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: var(--shadow);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 16px;
+      border-radius: 12px;
       text-align: center;
     }
     .next-piece-box .label {
       font-size: 12px;
-      color: var(--text-secondary);
+      color: rgba(255, 255, 255, 0.7);
       margin-bottom: 8px;
     }
     #nextCanvas {
@@ -54,18 +54,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(108, 92, 231, 0.15);
-      border: 1px solid rgba(108, 92, 231, 0.3);
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 12px;
       font-size: 20px;
-      color: var(--primary);
+      color: white;
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
     }
     .touch-btn:active {
-      background: var(--primary);
-      color: white;
+      background: white;
+      color: #667eea;
     }
     .touch-btn.wide {
       width: 120px;
@@ -87,6 +87,13 @@
     <button class="back-btn">← 返回</button>
     <span class="game-title">俄罗斯方块</span>
     <span class="game-score">0</span>
+  </div>
+
+  <div class="game-controls">
+    <button class="control-btn start-btn" onclick="startTetrisGame()">▶️ 开始</button>
+    <button class="control-btn pause-btn" onclick="togglePause(pauseTetris, resumeTetris)">⏸️ 暂停</button>
+    <button class="control-btn stop-btn" onclick="stopTetris()">⏹️ 停止</button>
+    <button class="control-btn help-btn" onclick="showHelp()">❓ 帮助</button>
   </div>
 
   <div class="game-container">
@@ -120,6 +127,23 @@
       <h2>游戏结束</h2>
       <div class="final-score">0</div>
       <button class="btn btn-primary restart-btn">再来一局</button>
+    </div>
+  </div>
+
+  <div class="help-overlay">
+    <div class="help-box">
+      <h2>❓ 游戏说明</h2>
+      <div class="help-content">
+        <ul>
+          <li>🎮 方向键左右移动，上键旋转</li>
+          <li>⬇️ 下键加速下落，空格键直接落底</li>
+          <li>📱 手机：虚拟按键控制</li>
+          <li>消行得分：1行100，2行300，3行500，4行800</li>
+          <li>⚡ 消行越多，速度越快</li>
+          <li>🏆 挑战最高分！</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary close-btn" onclick="hideHelp()">知道了</button>
     </div>
   </div>
 
@@ -157,7 +181,7 @@
       nextPiece = randomPiece();
       spawnPiece();
       updateScore(0);
-      startTetris();
+      draw();
     }
 
     function randomPiece() {
@@ -174,7 +198,7 @@
         clearInterval(gameLoop);
         playSound('gameover');
         setBestScore('tetris', score);
-        showGameOver(score, initTetris);
+        showGameOver(score, startTetrisGame);
       }
     }
 
@@ -252,11 +276,31 @@
       draw();
     }
 
+    function startTetrisGame() {
+      initTetris();
+      startGame();
+      clearInterval(gameLoop);
+      gameLoop = setInterval(drop, dropInterval);
+    }
+
+    function pauseTetris() {
+      clearInterval(gameLoop);
+    }
+
+    function resumeTetris() {
+      gameLoop = setInterval(drop, dropInterval);
+    }
+
+    function stopTetris() {
+      clearInterval(gameLoop);
+      initTetris();
+    }
+
     function draw() {
-      ctx.fillStyle = '#F8F9FA';
+      ctx.fillStyle = 'rgba(248, 249, 250, 0.3)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = '#E9ECEF';
+      ctx.strokeStyle = 'rgba(233, 236, 239, 0.3)';
       ctx.lineWidth = 0.5;
       for (let r = 0; r <= ROWS; r++) {
         ctx.beginPath();
@@ -289,7 +333,7 @@
             ctx.fill();
           }
 
-      nextCtx.fillStyle = '#F8F9FA';
+      nextCtx.fillStyle = 'rgba(248, 249, 250, 0.3)';
       nextCtx.fillRect(0, 0, 80, 80);
       for (let r = 0; r < nextPiece.shape.length; r++)
         for (let c = 0; c < nextPiece.shape[r].length; c++)
@@ -299,11 +343,6 @@
             nextCtx.roundRect(c * 18 + 5, r * 18 + 5, 16, 16, 3);
             nextCtx.fill();
           }
-    }
-
-    function startTetris() {
-      clearInterval(gameLoop);
-      gameLoop = setInterval(drop, dropInterval);
     }
 
     document.addEventListener('keydown', (e) => {

@@ -15,6 +15,13 @@
     <span class="game-score">0</span>
   </div>
 
+  <div class="game-controls">
+    <button class="control-btn start-btn" onclick="startSnake()">▶️ 开始</button>
+    <button class="control-btn pause-btn" onclick="togglePause(pauseSnake, resumeSnake)">⏸️ 暂停</button>
+    <button class="control-btn stop-btn" onclick="stopSnake()">⏹️ 停止</button>
+    <button class="control-btn help-btn" onclick="showHelp()">❓ 帮助</button>
+  </div>
+
   <div class="game-container">
     <canvas id="canvas"></canvas>
   </div>
@@ -27,7 +34,23 @@
     </div>
   </div>
 
-  <div id="touchArea" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;"></div>
+  <div class="help-overlay">
+    <div class="help-box">
+      <h2>❓ 游戏说明</h2>
+      <div class="help-content">
+        <ul>
+          <li>🎮 使用方向键或 WASD 控制蛇的移动</li>
+          <li>🍎 吃到红色食物得分 +10</li>
+          <li>⚡ 分数越高，速度越快</li>
+          <li>💀 撞墙或撞到自己游戏结束</li>
+          <li>🏆 挑战最高分！</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary close-btn" onclick="hideHelp()">知道了</button>
+    </div>
+  </div>
+
+  <div id="touchArea" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:50;"></div>
 
   <script src="../../js/common.js"></script>
   <script src="../../js/touch-controls.js"></script>
@@ -38,7 +61,7 @@
     let cols, rows, snake, food, direction, nextDirection, score, gameLoop, speed;
 
     function init() {
-      const size = Math.min(window.innerWidth - 32, window.innerHeight - 200, 400);
+      const size = Math.min(window.innerWidth - 32, window.innerHeight - 250, 400);
       canvas.width = size;
       canvas.height = size;
       cols = Math.floor(size / gridSize);
@@ -51,7 +74,7 @@
       speed = 150;
       placeFood();
       updateScore(0);
-      startGame();
+      draw();
     }
 
     function placeFood() {
@@ -63,9 +86,24 @@
       } while (snake.some(s => s.x === food.x && s.y === food.y));
     }
 
-    function startGame() {
+    function startSnake() {
+      init();
+      startGame();
       clearInterval(gameLoop);
       gameLoop = setInterval(update, speed);
+    }
+
+    function pauseSnake() {
+      clearInterval(gameLoop);
+    }
+
+    function resumeSnake() {
+      gameLoop = setInterval(update, speed);
+    }
+
+    function stopSnake() {
+      clearInterval(gameLoop);
+      init();
     }
 
     function update() {
@@ -84,7 +122,7 @@
         clearInterval(gameLoop);
         playSound('gameover');
         setBestScore('snake', score);
-        showGameOver(score, init);
+        showGameOver(score, startSnake);
         return;
       }
 

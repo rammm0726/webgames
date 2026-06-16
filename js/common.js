@@ -1,3 +1,6 @@
+let gamePaused = false;
+let gameStarted = false;
+
 function isTouchDevice() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
@@ -63,4 +66,45 @@ function showGameOver(score, onRestart) {
     overlay.classList.remove('show');
     onRestart();
   };
+}
+
+function togglePause(onPause, onResume) {
+  gamePaused = !gamePaused;
+  const btn = document.querySelector('.pause-btn');
+  if (gamePaused) {
+    btn.innerHTML = '▶️ 继续';
+    btn.classList.add('active');
+    onPause && onPause();
+  } else {
+    btn.innerHTML = '⏸️ 暂停';
+    btn.classList.remove('active');
+    onResume && onResume();
+  }
+}
+
+function stopGame(onStop) {
+  gameStarted = false;
+  gamePaused = false;
+  onStop && onStop();
+}
+
+function startGame(onStart) {
+  gameStarted = true;
+  gamePaused = false;
+  const btn = document.querySelector('.pause-btn');
+  if (btn) {
+    btn.innerHTML = '⏸️ 暂停';
+    btn.classList.remove('active');
+  }
+  onStart && onStart();
+}
+
+function showHelp() {
+  const overlay = document.querySelector('.help-overlay');
+  overlay.classList.add('show');
+}
+
+function hideHelp() {
+  const overlay = document.querySelector('.help-overlay');
+  overlay.classList.remove('show');
 }

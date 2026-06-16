@@ -19,8 +19,9 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       padding: 8px;
-      background: #BEB0A5;
+      background: rgba(190, 176, 165, 0.3);
       border-radius: 12px;
+      backdrop-filter: blur(10px);
     }
     .cell {
       width: 72px;
@@ -34,7 +35,7 @@
       color: white;
       transition: all 0.15s ease;
     }
-    .cell-0 { background: rgba(238, 228, 218, 0.35); color: transparent; }
+    .cell-0 { background: rgba(255, 255, 255, 0.2); color: transparent; }
     .cell-2 { background: #EEE4DA; color: #776E65; }
     .cell-4 { background: #EDE0C8; color: #776E65; }
     .cell-8 { background: #F2B179; }
@@ -52,21 +53,21 @@
       gap: 12px;
     }
     .score-box {
-      background: var(--card-bg);
-      padding: 8px 20px;
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      border-radius: 12px;
       text-align: center;
-      box-shadow: var(--shadow);
     }
     .score-box .label {
       font-size: 12px;
-      color: var(--text-secondary);
+      color: rgba(255, 255, 255, 0.7);
       text-transform: uppercase;
     }
     .score-box .value {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 700;
-      color: var(--primary);
+      color: white;
     }
     .actions {
       display: flex;
@@ -88,6 +89,11 @@
     <span class="game-score" id="currentScore">0</span>
   </div>
 
+  <div class="game-controls">
+    <button class="control-btn start-btn" onclick="init2048()">▶️ 开始</button>
+    <button class="control-btn help-btn" onclick="showHelp()">❓ 帮助</button>
+  </div>
+
   <div class="game-container">
     <div class="board-container">
       <div class="score-row">
@@ -101,9 +107,6 @@
         </div>
       </div>
       <div class="board" id="board"></div>
-      <div class="actions">
-        <button class="btn btn-primary" onclick="init2048()">新游戏</button>
-      </div>
     </div>
   </div>
 
@@ -112,6 +115,23 @@
       <h2>游戏结束</h2>
       <div class="final-score">0</div>
       <button class="btn btn-primary restart-btn">再来一局</button>
+    </div>
+  </div>
+
+  <div class="help-overlay">
+    <div class="help-box">
+      <h2>❓ 游戏说明</h2>
+      <div class="help-content">
+        <ul>
+          <li>🎮 使用方向键或滑动屏幕移动方块</li>
+          <li>🔢 相同数字会合并成更大的数字</li>
+          <li>🎯 目标是合成 2048！</li>
+          <li>📱 手机：上下左右滑动</li>
+          <li>⌨️ 电脑：方向键控制</li>
+          <li>🏆 挑战最高分！</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary close-btn" onclick="hideHelp()">知道了</button>
     </div>
   </div>
 
