@@ -368,6 +368,14 @@ canvas { display: block; }
           gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.3);
           osc.start(); osc.stop(_audioCtx.currentTime + 0.3);
           break;
+        case 'powerup':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1000, _audioCtx.currentTime);
+          osc.frequency.linearRampToValueAtTime(1200, _audioCtx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.1, _audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.1);
+          osc.start(); osc.stop(_audioCtx.currentTime + 0.1);
+          break;
       }
     } catch(e) {}
   }
@@ -416,6 +424,13 @@ canvas { display: block; }
   var playerRespawning = false;
   var waveTransitionTimer = 0;
   var waveTransition = false;
+  var powerups = [];
+  var weaponLv = 1;
+  var shieldTimer = 0;
+  var speedTimer = 0;
+  var freezeTimer = 0;
+  var floatingTexts = [];
+  var powerupSpawnTimer = 15;
 
   bestEl.textContent = bestScore;
 
@@ -475,6 +490,13 @@ canvas { display: block; }
     playerRespawnTimer = 0;
     waveTransition = false;
     waveTransitionTimer = 0;
+    powerups = [];
+    weaponLv = 1;
+    shieldTimer = 0;
+    speedTimer = 0;
+    freezeTimer = 0;
+    floatingTexts = [];
+    powerupSpawnTimer = 15;
     spawnPlayer();
     nextWave();
     updateUI();
@@ -483,6 +505,10 @@ canvas { display: block; }
   function spawnPlayer() {
     player = createTank(2 * CELL + CELL / 2, 11 * CELL + CELL / 2, 'up', true);
     player.invincible = 2.0;
+    weaponLv = 1;
+    player.fireRate = 0.35;
+    shieldTimer = 0;
+    speedTimer = 0;
   }
 
   function nextWave() {
@@ -535,6 +561,56 @@ canvas { display: block; }
     waveEl.textContent = wave;
     livesEl.textContent = lives;
     bestEl.textContent = bestScore;
+  }
+
+  // ===== Powerup System =====
+  var powerupTypes = ['weapon', 'shield', 'speed', 'life', 'bomb', 'freeze'];
+  var powerupLabels = { weapon: '\u26A1', shield: '\uD83D\uDEE1\uFE0F', speed: '\uD83D\uDC5F', life: '\u2764\uFE0F', bomb: '\uD83D\uDCA3', freeze: '\u2744\uFE0F' };
+  var powerupColors = { weapon: '#f39c12', shield: '#2ecc71', speed: '#3498db', life: '#e74c3c', bomb: '#8e44ad', freeze: '#00bcd4' };
+  var powerupNames = { weapon: '\u6B66\u5668\u5347\u7EA7!', shield: '\u62A4\u76FE!', speed: '\u52A0\u901F!', life: '+1\u547D!', bomb: '\u5168\u706D!', freeze: '\u51BB\u7ED3!' };
+
+  function spawnPowerup(x, y) {
+    var type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+    powerups.push({ x: x, y: y, type: type, timer: 10 });
+  }
+
+  function collectPowerup(idx) {
+    var pu = powerups[idx];
+    var type = pu.type;
+    playSound('powerup');
+    floatingTexts.push({ x: pu.x, y: pu.y, text: powerupLabels[type] + powerupNames[type], timer: 1.0, maxTimer: 1.0 });
+    switch (type) {
+      case 'weapon':
+        if (weaponLv < 3) weaponLv++;
+        if (weaponLv === 2) player.fireRate = 0.2;
+        else if (weaponLv >= 3) { player.fireRate = 0.12; }
+        break;
+      case 'shield':
+        shieldTimer = 6;
+        break;
+      case 'speed':
+        speedTimer = 8;
+        break;
+      case 'life':
+        lives++;
+        updateUI();
+        break;
+      case 'bomb':
+        for (var i = enemies.length - 1; i >= 0; i--) {
+          if (enemies[i].alive) {
+            enemies[i].alive = false;
+            score += 100;
+            addExplosion(enemies[i].x, enemies[i].y, 'big');
+          }
+        }
+        playSound('explode');
+        updateUI();
+        break;
+      case 'freeze':
+        freezeTimer = 5;
+        break;
+    }
+    powerups.splice(idx, 1);
   }
 
   // ===== Input =====
@@ -760,11 +836,14 @@ canvas { display: block; }
   // ===== Bullets =====
   function fireBullet(tank) {
     if (tank.fireCooldown > 0) return;
-    // Player: max 1 bullet on screen
+    // Player: max bullets based on weapon level
     if (tank.isPlayer) {
+      var maxBullets = weaponLv >= 3 ? 2 : 1;
+      var playerBulletCount = 0;
       for (var i = 0; i < bullets.length; i++) {
-        if (bullets[i].isPlayer) return;
+        if (bullets[i].isPlayer) playerBulletCount++;
       }
+      if (playerBulletCount >= maxBullets) return;
     } else {
       // Each enemy: max 1 bullet
       for (var i = 0; i < bullets.length; i++) {
@@ -875,6 +954,10 @@ canvas { display: block; }
             score += 100;
             addExplosion(e.x, e.y, 'big');
             playSound('explode');
+            // 20% chance to drop a powerup
+            if (Math.random() < 0.2) {
+              spawnPowerup(e.x, e.y);
+            }
             bullets.splice(i, 1);
             removed = true;
             break;
@@ -884,15 +967,22 @@ canvas { display: block; }
         if (player && player.alive && player.invincible <= 0) {
           var ph = player.size / 2;
           if (b.x > player.x - ph && b.x < player.x + ph && b.y > player.y - ph && b.y < player.y + ph) {
-            player.alive = false;
-            lives--;
-            addExplosion(player.x, player.y, 'big');
-            playSound('explode');
-            bullets.splice(i, 1);
-            removed = true;
-            if (lives > 0) {
-              playerRespawning = true;
-              playerRespawnTimer = 1.5;
+            // Shield absorbs damage
+            if (shieldTimer > 0) {
+              bullets.splice(i, 1);
+              removed = true;
+            } else {
+              player.alive = false;
+              lives--;
+              weaponLv = 1;
+              addExplosion(player.x, player.y, 'big');
+              playSound('explode');
+              bullets.splice(i, 1);
+              removed = true;
+              if (lives > 0) {
+                playerRespawning = true;
+                playerRespawnTimer = 1.5;
+              }
             }
           }
         }
@@ -978,11 +1068,57 @@ canvas { display: block; }
       if (waveTransitionTimer <= 0) waveTransition = false;
     }
 
+    // Powerup timers
+    if (shieldTimer > 0) shieldTimer -= dt;
+    if (speedTimer > 0) speedTimer -= dt;
+    if (freezeTimer > 0) freezeTimer -= dt;
+    if (shieldTimer < 0) shieldTimer = 0;
+    if (speedTimer < 0) speedTimer = 0;
+    if (freezeTimer < 0) freezeTimer = 0;
+
+    // Powerup spawn timer: auto-spawn if none on map
+    powerupSpawnTimer -= dt;
+    if (powerupSpawnTimer <= 0 && powerups.length === 0) {
+      // Find a random empty cell
+      var emptyCells = [];
+      for (var r = 0; r < ROWS; r++) {
+        for (var c = 0; c < COLS; c++) {
+          if (map[r][c] === 0) emptyCells.push({ r: r, c: c });
+        }
+      }
+      if (emptyCells.length > 0) {
+        var cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        spawnPowerup(cell.c * CELL + CELL / 2, cell.r * CELL + CELL / 2);
+      }
+      powerupSpawnTimer = 15;
+    }
+
+    // Update powerup timers (expire after 10s)
+    for (var i = powerups.length - 1; i >= 0; i--) {
+      powerups[i].timer -= dt;
+      if (powerups[i].timer <= 0) powerups.splice(i, 1);
+    }
+
+    // Update floating texts
+    for (var i = floatingTexts.length - 1; i >= 0; i--) {
+      floatingTexts[i].timer -= dt;
+      floatingTexts[i].y -= 30 * dt;
+      if (floatingTexts[i].timer <= 0) floatingTexts.splice(i, 1);
+    }
+
     // Player input
     if (player && player.alive) {
       player.fireCooldown -= dt;
       player.invincible -= dt;
       if (player.invincible < 0) player.invincible = 0;
+
+      // Speed boost
+      var baseSpeed = 110;
+      if (speedTimer > 0) {
+        player.speed = baseSpeed * 1.6;
+      } else {
+        player.speed = baseSpeed;
+      }
 
       if (!waveTransition) {
         if (keys['ArrowUp'] || keys['KeyW'] || mobileDir === 'up') moveTank(player, 'up', dt);
@@ -992,6 +1128,16 @@ canvas { display: block; }
       }
 
       if (keys['Space'] || mobileFire) fireBullet(player);
+
+      // Check powerup collection
+      for (var i = powerups.length - 1; i >= 0; i--) {
+        var pu = powerups[i];
+        var dx = player.x - pu.x;
+        var dy = player.y - pu.y;
+        if (Math.sqrt(dx * dx + dy * dy) < CELL / 2) {
+          collectPowerup(i);
+        }
+      }
     }
 
     // Player respawn
@@ -1023,7 +1169,7 @@ canvas { display: block; }
       e.fireCooldown -= dt;
       e.invincible -= dt;
       if (e.invincible < 0) e.invincible = 0;
-      if (!waveTransition) updateEnemyAI(e, dt);
+      if (!waveTransition && freezeTimer <= 0) updateEnemyAI(e, dt);
     }
 
     // Clean dead enemies
@@ -1069,10 +1215,12 @@ canvas { display: block; }
     ctx.fillRect(0, 0, W, H);
 
     drawMap();
+    drawPowerups();
     drawTanks();
     drawBullets();
     drawEffects();
     drawHUD();
+    drawPowerupHUD();
   }
 
   function drawMap() {
@@ -1149,6 +1297,13 @@ canvas { display: block; }
       if (!e.alive) continue;
       if (e.invincible > 0 && Math.floor(e.invincible * 10) % 2 === 0) continue;
       drawTank(e.x, e.y, e.dir, '#e74c3c', '#c0392b', '#ff6b6b');
+      // Freeze visual: blue tint overlay
+      if (freezeTimer > 0) {
+        var flashAlpha = 0.2 + 0.15 * Math.sin(performance.now() / 150 + i);
+        ctx.fillStyle = 'rgba(0,150,255,' + flashAlpha + ')';
+        var eh = e.size / 2;
+        ctx.fillRect(e.x - eh, e.y - eh, e.size, e.size);
+      }
     }
     // Player
     if (player && player.alive) {
@@ -1161,6 +1316,20 @@ canvas { display: block; }
         ctx.stroke();
       } else {
         drawTank(player.x, player.y, player.dir, '#2ecc71', '#27ae60', '#55efc4');
+      }
+      // Enhanced shield visual when shieldTimer > 0
+      if (shieldTimer > 0) {
+        var pulse = 0.3 + 0.2 * Math.sin(performance.now() / 200);
+        ctx.strokeStyle = 'rgba(46,204,113,' + pulse + ')';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.size / 2 + 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(46,204,113,' + (pulse * 0.5) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.size / 2 + 8, 0, Math.PI * 2);
+        ctx.stroke();
       }
     }
   }
@@ -1303,6 +1472,72 @@ canvas { display: block; }
       ctx.fillStyle = 'rgba(255,0,0,0.3)';
       ctx.fillRect(bx, by, CELL, CELL);
     }
+  }
+
+  function drawPowerups() {
+    var now = performance.now();
+    for (var i = 0; i < powerups.length; i++) {
+      var pu = powerups[i];
+      var pulse = 0.7 + 0.3 * Math.sin(now / 200 + i);
+      var size = 24;
+      var half = size / 2;
+      // Flashing when about to expire (last 3 seconds)
+      if (pu.timer < 3 && Math.floor(pu.timer * 4) % 2 === 0) continue;
+      // Background box
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = powerupColors[pu.type];
+      ctx.fillRect(pu.x - half, pu.y - half, size, size);
+      // Border
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(pu.x - half, pu.y - half, size, size);
+      // Emoji label
+      ctx.globalAlpha = 1;
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(powerupLabels[pu.type], pu.x, pu.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPowerupHUD() {
+    // Active effect timers
+    var texts = [];
+    if (shieldTimer > 0) texts.push(powerupLabels.shield + ' ' + Math.ceil(shieldTimer) + 's');
+    if (speedTimer > 0) texts.push(powerupLabels.speed + ' ' + Math.ceil(speedTimer) + 's');
+    if (freezeTimer > 0) texts.push(powerupLabels.freeze + ' ' + Math.ceil(freezeTimer) + 's');
+    if (weaponLv > 1) texts.push(powerupLabels.weapon + 'Lv' + weaponLv);
+
+    if (texts.length > 0) {
+      var hudText = texts.join('  ');
+      ctx.font = 'bold 12px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      var tw = ctx.measureText(hudText).width;
+      // Dark background for readability
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(4, 4, tw + 12, 20);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(hudText, 10, 8);
+    }
+
+    // Floating collection texts
+    for (var i = 0; i < floatingTexts.length; i++) {
+      var ft = floatingTexts[i];
+      var alpha = ft.timer / ft.maxTimer;
+      ctx.globalAlpha = alpha;
+      ctx.font = 'bold 13px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(ft.text, ft.x, ft.y);
+      ctx.fillText(ft.text, ft.x, ft.y);
+    }
+    ctx.globalAlpha = 1;
   }
 
   // ===== Initial draw =====
