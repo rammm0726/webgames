@@ -131,7 +131,7 @@ body {
   // ==================== CANVAS SETUP ====================
   var canvas = document.getElementById('gameCanvas');
   var ctx = canvas.getContext('2d');
-  var W, H, gridOffsetX, gridOffsetY, DANGER_Y;
+  var W, H, gridOffsetX, gridOffsetY, DANGER_Y, WALL_LEFT, WALL_RIGHT;
 
   function resizeCanvas() {
     var maxW = Math.min(600, window.innerWidth - 20);
@@ -146,6 +146,12 @@ body {
     gridOffsetX = (W - gridW) / 2 + BUBBLE_RADIUS;
     gridOffsetY = BUBBLE_RADIUS + 10;
     DANGER_Y = H - ROW_HEIGHT * DANGER_ROW_OFFSET;
+    // Wall boundaries aligned to grid edges
+    // Even row: cols 0..9, centers from gridOffsetX to gridOffsetX+(COLS-1)*DIAMETER
+    // Odd row: cols 0..8, centers from gridOffsetX+RADIUS to gridOffsetX+8*DIAMETER+RADIUS
+    // Walls must encompass all possible bubble centers
+    WALL_LEFT = gridOffsetX - BUBBLE_RADIUS;
+    WALL_RIGHT = gridOffsetX + (COLS - 1) * BUBBLE_DIAMETER + BUBBLE_RADIUS;
   }
   resizeCanvas();
 
@@ -300,14 +306,17 @@ body {
   }
 
   function snapToGrid(x, y) {
-    // Find the closest grid position
-    var bestR = 0, bestC = 0, bestDist = Infinity;
-    // Estimate row from y
     var approxRow = Math.round((y - gridOffsetY) / ROW_HEIGHT);
-    for (var r = Math.max(0, approxRow - 2); r <= approxRow + 2 && r < grid.length; r++) {
+    var minR = Math.max(0, approxRow - 2);
+    var maxR = Math.min(approxRow + 2, grid.length - 1);
+
+    // Find nearest empty cell that is adjacent to at least one existing bubble
+    var bestR = -1, bestC = -1, bestDist = Infinity;
+    for (var r = minR; r <= maxR; r++) {
       var maxC = getMaxCols(r);
       for (var c = 0; c < maxC; c++) {
-        if (grid[r][c] >= 0) continue; // occupied
+        if (grid[r][c] >= 0) continue;
+        if (!isAdjacentToOccupied(r, c)) continue;
         var pos = getBubblePos(r, c);
         var dx = pos.x - x;
         var dy = pos.y - y;
@@ -319,7 +328,53 @@ body {
         }
       }
     }
+
+    // If no adjacent cell found, allow any cell in row 0 (always valid top anchor)
+    if (bestR < 0) {
+      for (var c = 0; c < getMaxCols(0); c++) {
+        if (grid[0][c] >= 0) continue;
+        var pos = getBubblePos(0, c);
+        var dx = pos.x - x;
+        var dy = pos.y - y;
+        var dist = dx * dx + dy * dy;
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestR = 0;
+          bestC = c;
+        }
+      }
+    }
+
+    // Last resort: nearest empty cell anywhere nearby
+    if (bestR < 0) {
+      bestDist = Infinity;
+      for (var r = minR; r <= maxR; r++) {
+        var maxC = getMaxCols(r);
+        for (var c = 0; c < maxC; c++) {
+          if (grid[r][c] >= 0) continue;
+          var pos = getBubblePos(r, c);
+          var dx = pos.x - x;
+          var dy = pos.y - y;
+          var dist = dx * dx + dy * dy;
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestR = r;
+            bestC = c;
+          }
+        }
+      }
+    }
+
     return { r: bestR, c: bestC };
+  }
+
+  function isAdjacentToOccupied(row, col) {
+    if (row === 0) return true; // top row always valid
+    var nb = getNeighbors(row, col);
+    for (var i = 0; i < nb.length; i++) {
+      if (isValidCell(nb[i].r, nb[i].c) && grid[nb[i].r][nb[i].c] >= 0) return true;
+    }
+    return false;
   }
 
   function gridHasBubble() {
@@ -443,13 +498,13 @@ body {
       fb.x += fb.vx;
       fb.y += fb.vy;
 
-      // Wall bounce with proper clamping to prevent sticking
-      if (fb.x < BUBBLE_RADIUS) {
-        fb.x = BUBBLE_RADIUS;
+      // Wall bounce (aligned to grid boundaries)
+      if (fb.x < WALL_LEFT + BUBBLE_RADIUS) {
+        fb.x = WALL_LEFT + BUBBLE_RADIUS;
         if (fb.vx < 0) fb.vx = -fb.vx;
       }
-      if (fb.x > W - BUBBLE_RADIUS) {
-        fb.x = W - BUBBLE_RADIUS;
+      if (fb.x > WALL_RIGHT - BUBBLE_RADIUS) {
+        fb.x = WALL_RIGHT - BUBBLE_RADIUS;
         if (fb.vx > 0) fb.vx = -fb.vx;
       }
 
@@ -743,10 +798,30 @@ body {
     }
   }
 
+  function drawWalls() {
+    ctx.save();
+    // Left wall
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(0, 0, WALL_LEFT, H);
+    // Right wall
+    ctx.fillRect(WALL_RIGHT, 0, W - WALL_RIGHT, H);
+    // Wall edge lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(WALL_LEFT, 0);
+    ctx.lineTo(WALL_LEFT, H);
+    ctx.moveTo(WALL_RIGHT, 0);
+    ctx.lineTo(WALL_RIGHT, H);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // ==================== GAME LOOP ====================
   function gameLoop() {
     ctx.clearRect(0, 0, W, H);
 
+    drawWalls();
     drawDangerLine();
     drawGrid();
     drawFiredBubble();
