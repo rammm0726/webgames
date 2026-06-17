@@ -365,6 +365,27 @@ body {
     return { r: bestR, c: bestC };
   }
 
+  // Safety: if all priorities failed, search entire grid for any empty cell
+  function snapToGridFallback(x, y) {
+    var bestR = -1, bestC = -1, bestDist = Infinity;
+    for (var r = 0; r < grid.length; r++) {
+      var maxC = getMaxCols(r);
+      for (var c = 0; c < maxC; c++) {
+        if (grid[r][c] >= 0) continue;
+        var pos = getBubblePos(r, c);
+        var dx = pos.x - x;
+        var dy = pos.y - y;
+        var dist = dx * dx + dy * dy;
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestR = r;
+          bestC = c;
+        }
+      }
+    }
+    return { r: bestR, c: bestC };
+  }
+
   function isAdjacentToOccupied(row, col) {
     if (row === 0) return true; // top row always valid
     var nb = getNeighbors(row, col);
@@ -532,6 +553,17 @@ body {
   function snapBubble(idx) {
     var fb = firedBubbles[idx];
     var snap = snapToGrid(fb.x, fb.y);
+
+    // Safety: if snapToGrid failed to find a valid cell, try full-grid fallback
+    if (snap.r < 0 || !grid[snap.r] || snap.c < 0 || snap.c >= getMaxCols(snap.r)) {
+      snap = snapToGridFallback(fb.x, fb.y);
+    }
+    // Ultimate safety: if still invalid, just remove the bubble to prevent crash
+    if (snap.r < 0 || !grid[snap.r] || snap.c < 0 || snap.c >= getMaxCols(snap.r)) {
+      firedBubbles.splice(idx, 1);
+      return;
+    }
+
     ensureGridRows(snap.r + 5);
     if (grid[snap.r][snap.c] >= 0) {
       // Fallback: find nearest empty cell
