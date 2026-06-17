@@ -146,12 +146,9 @@ body {
     gridOffsetX = (W - gridW) / 2 + BUBBLE_RADIUS;
     gridOffsetY = BUBBLE_RADIUS + 10;
     DANGER_Y = H - ROW_HEIGHT * DANGER_ROW_OFFSET;
-    // Wall boundaries aligned to grid edges
-    // Even row: cols 0..9, centers from gridOffsetX to gridOffsetX+(COLS-1)*DIAMETER
-    // Odd row: cols 0..8, centers from gridOffsetX+RADIUS to gridOffsetX+8*DIAMETER+RADIUS
-    // Walls must encompass all possible bubble centers
-    WALL_LEFT = gridOffsetX - BUBBLE_RADIUS;
-    WALL_RIGHT = gridOffsetX + (COLS - 1) * BUBBLE_DIAMETER + BUBBLE_RADIUS;
+    // Wall boundaries at canvas edges (full width for bouncing)
+    WALL_LEFT = 4;
+    WALL_RIGHT = W - 4;
   }
   resizeCanvas();
 
@@ -800,13 +797,20 @@ body {
 
   function drawWalls() {
     ctx.save();
-    // Left wall
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(0, 0, WALL_LEFT, H);
-    // Right wall
-    ctx.fillRect(WALL_RIGHT, 0, W - WALL_RIGHT, H);
-    // Wall edge lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    // Left wall glow
+    var gradL = ctx.createLinearGradient(0, 0, WALL_LEFT + 8, 0);
+    gradL.addColorStop(0, 'rgba(255,255,255,0.25)');
+    gradL.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gradL;
+    ctx.fillRect(0, 0, WALL_LEFT + 8, H);
+    // Right wall glow
+    var gradR = ctx.createLinearGradient(W - WALL_LEFT - 8, 0, W, 0);
+    gradR.addColorStop(0, 'rgba(255,255,255,0)');
+    gradR.addColorStop(1, 'rgba(255,255,255,0.25)');
+    ctx.fillStyle = gradR;
+    ctx.fillRect(W - WALL_LEFT - 8, 0, WALL_LEFT + 8, H);
+    // Edge lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(WALL_LEFT, 0);
