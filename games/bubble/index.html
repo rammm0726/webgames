@@ -159,7 +159,7 @@ body {
   var currentBubbleColor = 0;
   var nextBubbleColor = 0;
   var aimAngle = -Math.PI / 2; // straight up
-  var firedBubble = null; // {x, y, vx, vy, color}
+  var firedBubbles = []; // array of {x, y, vx, vy, color}
   var particles = [];
   var fallingBubbles = [];
   var lastNewRowTime = Date.now();
@@ -403,17 +403,17 @@ body {
   }
 
   function fireBubble() {
-    if (firedBubble || gameOver || gameWon || animating) return;
+    if (gameOver || gameWon) return;
     var shooterX = W / 2;
     var shooterY = H - 50;
     var speed = 12;
-    firedBubble = {
+    firedBubbles.push({
       x: shooterX,
       y: shooterY,
       vx: Math.cos(aimAngle) * speed,
       vy: Math.sin(aimAngle) * speed,
       color: currentBubbleColor
-    };
+    });
     currentBubbleColor = nextBubbleColor;
     nextBubbleColor = pickNextColor();
     shotCount++;
@@ -438,44 +438,47 @@ body {
 
   // ==================== COLLISION & SNAP ====================
   function updateFiredBubble() {
-    if (!firedBubble) return;
-    var fb = firedBubble;
-    fb.x += fb.vx;
-    fb.y += fb.vy;
+    for (var i = firedBubbles.length - 1; i >= 0; i--) {
+      var fb = firedBubbles[i];
+      fb.x += fb.vx;
+      fb.y += fb.vy;
 
-    // Wall bounce
-    if (fb.x - BUBBLE_RADIUS <= 0) {
-      fb.x = BUBBLE_RADIUS;
-      fb.vx = -fb.vx;
-    }
-    if (fb.x + BUBBLE_RADIUS >= W) {
-      fb.x = W - BUBBLE_RADIUS;
-      fb.vx = -fb.vx;
-    }
+      // Wall bounce with proper clamping to prevent sticking
+      if (fb.x < BUBBLE_RADIUS) {
+        fb.x = BUBBLE_RADIUS;
+        if (fb.vx < 0) fb.vx = -fb.vx;
+      }
+      if (fb.x > W - BUBBLE_RADIUS) {
+        fb.x = W - BUBBLE_RADIUS;
+        if (fb.vx > 0) fb.vx = -fb.vx;
+      }
 
-    // Top wall
-    if (fb.y - BUBBLE_RADIUS <= gridOffsetY - ROW_HEIGHT) {
-      snapBubble(fb);
-      return;
-    }
+      // Top wall
+      if (fb.y - BUBBLE_RADIUS <= gridOffsetY - ROW_HEIGHT) {
+        snapBubble(i);
+        continue;
+      }
 
-    // Check collision with existing bubbles
-    for (var r = 0; r < grid.length; r++) {
-      for (var c = 0; c < getMaxCols(r); c++) {
-        if (grid[r][c] < 0) continue;
-        var pos = getBubblePos(r, c);
-        var dx = fb.x - pos.x;
-        var dy = fb.y - pos.y;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < BUBBLE_DIAMETER * 0.95) {
-          snapBubble(fb);
-          return;
+      // Check collision with existing grid bubbles
+      var hit = false;
+      for (var r = 0; r < grid.length && !hit; r++) {
+        for (var c = 0; c < getMaxCols(r) && !hit; c++) {
+          if (grid[r][c] < 0) continue;
+          var pos = getBubblePos(r, c);
+          var dx = fb.x - pos.x;
+          var dy = fb.y - pos.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < BUBBLE_DIAMETER * 0.95) {
+            snapBubble(i);
+            hit = true;
+          }
         }
       }
     }
   }
 
-  function snapBubble(fb) {
+  function snapBubble(idx) {
+    var fb = firedBubbles[idx];
     var snap = snapToGrid(fb.x, fb.y);
     ensureGridRows(snap.r + 5);
     if (grid[snap.r][snap.c] >= 0) {
@@ -492,7 +495,7 @@ body {
       }
     }
     grid[snap.r][snap.c] = fb.color;
-    firedBubble = null;
+    firedBubbles.splice(idx, 1);
 
     // Check matches
     processMatch(snap.r, snap.c, fb.color);
@@ -640,8 +643,8 @@ body {
     var sx = W / 2;
     var sy = H - 50;
 
-    // Aim line (dotted)
-    if (!firedBubble && !animating && !gameOver && !gameWon) {
+    // Aim line (dotted) - always visible when game is active
+    if (!gameOver && !gameWon) {
       ctx.save();
       ctx.strokeStyle = 'rgba(255,255,255,0.4)';
       ctx.lineWidth = 2;
@@ -684,8 +687,9 @@ body {
   }
 
   function drawFiredBubble() {
-    if (!firedBubble) return;
-    drawBubble(firedBubble.x, firedBubble.y, firedBubble.color);
+    for (var i = 0; i < firedBubbles.length; i++) {
+      drawBubble(firedBubbles[i].x, firedBubbles[i].y, firedBubbles[i].color);
+    }
   }
 
   function drawParticles() {
@@ -751,12 +755,12 @@ body {
     drawFallingBubbles();
     drawShotCounter();
 
-    if (firedBubble) updateFiredBubble();
+    if (firedBubbles.length > 0) updateFiredBubble();
     updateParticles();
     updateFallingBubbles();
 
     // Time-based new row check (also handled in afterTurn)
-    if (!gameOver && !gameWon && !animating && !firedBubble) {
+    if (!gameOver && !gameWon && !animating && firedBubbles.length === 0) {
       var now = Date.now();
       if (now - lastNewRowTime > NEW_ROW_INTERVAL) {
         addNewRow();
@@ -860,7 +864,7 @@ body {
     gameWon = false;
     score = 0;
     shotCount = 0;
-    firedBubble = null;
+    firedBubbles = [];
     particles = [];
     fallingBubbles = [];
     animating = false;
